@@ -1,5 +1,8 @@
 {
     "videoIDs": ["CUF00_L0_A01", "CUF00_L0_A02", "CUF00_L0_A03"],
+    "perspectives": ["wide", "parent", "child"],
+    "videoSrcTemplate": "assets/videos/{videoID}_{persp}.mp4",
+    "fallbackVideoSrcTemplate": "assets/videos/{videoID}_wide.mp4",
     "dataTypes": {
         "CUF00_L0_A01": ["speed", "vy", "vx"],
         "CUF00_L0_A02": ["speed", "vy", "vx"],
