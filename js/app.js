@@ -13,6 +13,7 @@ class DIMSApp {
         this.elanData = null;
         this.elanSelectedTiers = null;
         this.currentTab = 'timeseries';
+        this.currentPerspective = '';
     }
 
     async initialize() {
@@ -1272,6 +1273,20 @@ if (arrowData.x.length > 0) {
             if (windowSizeEl && this.config.defaultWindowSize) {
                 windowSizeEl.value = this.config.defaultWindowSize;
             }
+
+            // Populate perspective selector (multi-perspective video)
+            const pSel = document.getElementById('perspectiveSelect');
+            if (pSel) {
+                const list = Array.isArray(this.config.perspectives) ? this.config.perspectives : [];
+                pSel.innerHTML = '<option value="">auto</option>';
+                list.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = p;
+                    pSel.appendChild(opt);
+                });
+                this.currentPerspective = ''; // default "auto"
+            }
         } catch (error) {
             console.error('Error setting up controls:', error);
         }
@@ -1287,6 +1302,17 @@ if (arrowData.x.length > 0) {
                 this.handleTimeClick(this.lastClickedPoint);
             }
         });
+
+        const pSel = document.getElementById('perspectiveSelect');
+        if (pSel) {
+            pSel.addEventListener('change', (e) => {
+                this.currentPerspective = e.target.value || '';
+                // Re-render videos immediately with the current time/window
+                const t = this.lastClickedPoint ?? 0;
+                const win = parseInt(document.getElementById('windowSize').value) || (this.config.defaultWindowSize || 5);
+                this.updateVideos(t, win);
+            });
+        }
     }
 
     async loadJSON(url) {
@@ -1612,8 +1638,27 @@ if (arrowData.x.length > 0) {
             `Selected time: ${time.toFixed(2)}s (window: ${windowSize}s)`;
     }
 
+    // Build the video source URL, honoring perspective templates when configured.
+    // Falls back to assets/videos/{videoID}.mp4 when no perspectives are set.
+    buildVideoSrc() {
+        const tmpl = this.config.videoSrcTemplate;
+        const fallbackTmpl = this.config.fallbackVideoSrcTemplate || 'assets/videos/{videoID}.mp4';
+        const fill = (t, persp) =>
+            t.replace('{videoID}', this.currentVideoID).replace('{persp}', persp || '');
+
+        if (tmpl) {
+            if (this.currentPerspective) {
+                return fill(tmpl, this.currentPerspective);
+            }
+            if (Array.isArray(this.config.perspectives) && this.config.perspectives.length) {
+                return fill(tmpl, this.config.perspectives[0]); // "auto" -> first perspective
+            }
+        }
+        return fill(fallbackTmpl, '');
+    }
+
     updateVideos(clickTime, windowSize) {
-        const videoSrc = `assets/videos/${this.currentVideoID}.mp4`;
+        const videoSrc = this.buildVideoSrc();
         const startTime = Math.max(0, clickTime - windowSize / 2);
         const endTime = clickTime + windowSize / 2;
 
