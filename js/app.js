@@ -1370,9 +1370,14 @@ if (arrowData.x.length > 0) {
             this.loadCSV(`assets/timeseries/${videoID}_${dataType}.csv`)
         );
         
+        // Transcript is optional — tolerate a missing file without failing the load
+        const transcriptPromise = this
+            .loadJSON(`assets/transcripts/${videoID}_transcript.json`)
+            .catch(() => null);
+
         const [timeseriesResults, transcript] = await Promise.all([
             Promise.all(timeseriesPromises),
-            this.loadJSON(`assets/transcripts/${videoID}_transcript.json`)
+            transcriptPromise
         ]);
         
         // Keep datasets separate instead of merging
