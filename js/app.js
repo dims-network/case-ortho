@@ -12,6 +12,7 @@ class DIMSApp {
         this.crossWaveletData = null;
         this.elanData = null;
         this.elanSelectedTiers = null;
+        this.trajectoryData = null;
         this.currentTab = 'timeseries';
         this.currentPerspective = '';
     }
@@ -52,10 +53,11 @@ class DIMSApp {
     setupTabs() {
         const hasRQA = this.config.include_RQA && this.config.include_RQA.length > 0;
         const hasCrossWavelet = this.config.include_crosswavelet && this.config.include_crosswavelet.length >= 2;
+        const hasTrajectory = this.config.include_trajectory === true;
         const hasELAN = !!this.config.include_elan;
 
         // If no optional tabs, hide tab container
-        if (!hasRQA && !hasCrossWavelet && !hasELAN) {
+        if (!hasRQA && !hasCrossWavelet && !hasTrajectory && !hasELAN) {
             const tabContainer = document.getElementById('tabContainer');
             if (tabContainer) tabContainer.style.display = 'none';
             return;
@@ -103,7 +105,19 @@ class DIMSApp {
                     border-bottom: 3px solid transparent;
                 ">Cross-Wavelet</button>`;
             }
-            
+
+            if (hasTrajectory) {
+                tabHTML += `<button class="tab-button" data-tab="trajectory" style="
+                    padding: 10px 20px;
+                    background: #222;
+                    color: white;
+                    border: none;
+                    margin-right: 5px;
+                    cursor: pointer;
+                    border-bottom: 3px solid transparent;
+                ">Trajectory</button>`;
+            }
+
             if (hasELAN) {
                 tabHTML += `<button class="tab-button" data-tab="elan" style="
                     padding: 10px 20px;
@@ -140,6 +154,17 @@ class DIMSApp {
                 cwContainer.style.backgroundColor = '#111';
                 cwContainer.style.padding = '20px';
                 plotContainer.parentNode.insertBefore(cwContainer, plotContainer.nextSibling);
+            }
+
+            // Create Trajectory container if needed
+            if (hasTrajectory) {
+                const trajContainer = document.createElement('div');
+                trajContainer.id = 'trajectoryContainer';
+                trajContainer.style.display = 'none';
+                trajContainer.style.height = '800px';
+                trajContainer.style.backgroundColor = '#111';
+                trajContainer.style.padding = '20px';
+                plotContainer.parentNode.insertBefore(trajContainer, plotContainer.nextSibling);
             }
 
             // Create ELAN container if needed
@@ -182,7 +207,7 @@ class DIMSApp {
         });
         
         // Hide all containers, then show the selected one
-        ['plotContainer', 'rqaContainer', 'crossWaveletContainer', 'elanContainer'].forEach(id => {
+        ['plotContainer', 'rqaContainer', 'crossWaveletContainer', 'trajectoryContainer', 'elanContainer'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
         });
@@ -208,6 +233,15 @@ class DIMSApp {
             } else if (this.crossWaveletData && this.lastClickedPoint !== null) {
                 this.updateCrossWaveletHighlights();
             }
+        } else if (tabName === 'trajectory') {
+            const trajContainer = document.getElementById('trajectoryContainer');
+            if (trajContainer) trajContainer.style.display = 'block';
+            if (this.currentVideoID && (!this.trajectoryData || this.trajectoryData.videoID !== this.currentVideoID)) {
+                this.calculateAndShowTrajectory();
+            } else if (this.trajectoryData) {
+                this.updateTrajectoryHighlight();
+                Plotly.Plots.resize('trajectoryContainer');
+            }
         } else if (tabName === 'elan') {
             const elanContainer = document.getElementById('elanContainer');
             if (elanContainer) elanContainer.style.display = 'block';
@@ -217,6 +251,174 @@ class DIMSApp {
                 this.updateELANHighlight();
             }
         }
+    }
+
+    // Reconstruct a 2D trajectory by integrating velocity (vx, vy) over time,
+    // then render it over the configured field image. Driven by trajectory_settings.
+    calculateAndShowTrajectory() {
+        if (!this.currentData) return;
+
+        // Velocity series (CSV column headers must be exactly 'vx' and 'vy')
+        const vxSeries = this.currentData.find(d => d.name === 'vx');
+        const vySeries = this.currentData.find(d => d.name === 'vy');
+
+        if (!vxSeries || !vySeries) {
+            this.showError('Trajectory Error: Missing "vx" or "vy" data columns.');
+            return;
+        }
+
+        const getSorted = (series) => [...series.data].sort((a, b) => a.Time - b.Time);
+        const vxData = getSorted(vxSeries);
+        const vyData = getSorted(vySeries);
+
+        const xArr = [];
+        const yArr = [];
+        const tArr = [];
+
+        let currX = this.config.trajectory_settings?.startX || 0;
+        let currY = this.config.trajectory_settings?.startY || 0;
+
+        const len = Math.min(vxData.length, vyData.length);
+        for (let i = 0; i < len; i++) {
+            const t = vxData[i].Time;
+            const vx = vxData[i].vx;
+            const vy = vyData[i].vy;
+
+            if (i > 0) {
+                const dt = t - tArr[i - 1];
+                currX += vx * dt; // Euler integration
+                currY += vy * dt;
+            }
+
+            xArr.push(currX);
+            yArr.push(currY);
+            tArr.push(t);
+        }
+
+        this.trajectoryData = { videoID: this.currentVideoID, x: xArr, y: yArr, time: tArr };
+        this.renderTrajectoryPlot();
+    }
+
+    renderTrajectoryPlot() {
+        const containerId = 'trajectoryContainer';
+        const bgImage = this.config.trajectory_settings?.imagePath || '';
+        const fieldW = this.config.trajectory_settings?.fieldWidth || 100;
+        const fieldH = this.config.trajectory_settings?.fieldHeight || 100;
+
+        const traceFull = {
+            x: this.trajectoryData.x,
+            y: this.trajectoryData.y,
+            mode: 'lines',
+            type: 'scatter',
+            name: 'Full Path',
+            line: { color: 'rgba(0, 255, 255, 0.3)', width: 1 },
+            hoverinfo: 'none'
+        };
+
+        // Active window highlight, populated by updateTrajectoryHighlight
+        const traceWindow = {
+            x: [], y: [],
+            mode: 'lines',
+            type: 'scatter',
+            name: 'Active Window',
+            line: { color: 'red', width: 4 },
+            hoverinfo: 'none'
+        };
+
+        const traceMarker = {
+            x: [this.trajectoryData.x[0]],
+            y: [this.trajectoryData.y[0]],
+            mode: 'markers',
+            type: 'scatter',
+            name: 'Current Pos',
+            marker: { size: 12, color: 'yellow', line: { color: 'black', width: 2 } },
+            hovertemplate: 'X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>'
+        };
+
+        const layout = {
+            title: { text: 'Trajectory', font: { color: 'white' } },
+            paper_bgcolor: '#111',
+            plot_bgcolor: '#222',
+            font: { color: 'white' },
+            showlegend: true,
+            legend: { x: 0, y: 1, font: { size: 10 } },
+            xaxis: { range: [0, fieldW], showgrid: false, zeroline: false, visible: false },
+            yaxis: {
+                range: [0, fieldH], showgrid: false, zeroline: false, visible: false,
+                scaleanchor: 'x', scaleratio: 1 // 1:1 aspect ratio
+            },
+            images: bgImage ? [{
+                source: bgImage,
+                xref: 'x', yref: 'y',
+                x: 0, y: fieldH,
+                sizex: fieldW, sizey: fieldH,
+                sizing: 'stretch', opacity: 0.6, layer: 'below'
+            }] : [],
+            margin: { t: 40, l: 10, r: 10, b: 10 },
+            hovermode: 'closest',
+            dragmode: 'pan'
+        };
+
+        Plotly.newPlot(containerId, [traceFull, traceWindow, traceMarker], layout, { responsive: true });
+
+        // Click on the path -> seek to the nearest time
+        document.getElementById(containerId).on('plotly_click', (data) => {
+            if (data.points && data.points.length > 0) {
+                const pt = data.points[0];
+                let closestIdx = 0;
+                let minDist = Infinity;
+                const dataX = this.trajectoryData.x;
+                const dataY = this.trajectoryData.y;
+                for (let i = 0; i < dataX.length; i++) {
+                    const dx = dataX[i] - pt.x;
+                    const dy = dataY[i] - pt.y;
+                    const dist = dx * dx + dy * dy;
+                    if (dist < minDist) { minDist = dist; closestIdx = i; }
+                }
+                this.handleTimeClick(this.trajectoryData.time[closestIdx]);
+            }
+        });
+
+        if (this.lastClickedPoint !== null) {
+            this.updateTrajectoryHighlight();
+        }
+    }
+
+    updateTrajectoryHighlight() {
+        if (this.currentTab !== 'trajectory') return;
+        if (!this.trajectoryData) return;
+
+        const currentTime = this.lastClickedPoint !== null ? this.lastClickedPoint : 0;
+        const windowSize = parseFloat(document.getElementById('windowSize').value) || 5;
+        const halfWin = windowSize / 2;
+        const startTime = currentTime - halfWin;
+        const endTime = currentTime + halfWin;
+
+        const xWin = [];
+        const yWin = [];
+        let markerX = this.trajectoryData.x[0];
+        let markerY = this.trajectoryData.y[0];
+        let minTimeDiff = Infinity;
+
+        for (let i = 0; i < this.trajectoryData.time.length; i++) {
+            const t = this.trajectoryData.time[i];
+            if (t >= startTime && t <= endTime) {
+                xWin.push(this.trajectoryData.x[i]);
+                yWin.push(this.trajectoryData.y[i]);
+            }
+            const diff = Math.abs(t - currentTime);
+            if (diff < minTimeDiff) {
+                minTimeDiff = diff;
+                markerX = this.trajectoryData.x[i];
+                markerY = this.trajectoryData.y[i];
+            }
+        }
+
+        // Trace 1 = window, Trace 2 = marker
+        Plotly.restyle('trajectoryContainer', {
+            x: [xWin, [markerX]],
+            y: [yWin, [markerY]]
+        }, [1, 2]);
     }
 
     async loadCrossWaveletData(videoID) {
@@ -1629,6 +1831,8 @@ if (arrowData.x.length > 0) {
             this.updateRQAHighlights();
         } else if (this.currentTab === 'crosswavelet' && this.crossWaveletData) {
             this.updateCrossWaveletHighlights();
+        } else if (this.currentTab === 'trajectory' && this.trajectoryData) {
+            this.updateTrajectoryHighlight();
         } else if (this.currentTab === 'elan' && this.elanData) {
             this.updateELANHighlight();
         }
@@ -1720,6 +1924,7 @@ if (arrowData.x.length > 0) {
             this.crossWaveletData = null;
             this.elanData = null;
             this.elanSelectedTiers = null;
+            this.trajectoryData = null;
             
             if (this.currentData && this.currentData.length > 0) {
                 // Create time slider - find min/max across all datasets
