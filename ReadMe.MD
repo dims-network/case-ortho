@@ -1,12 +1,11 @@
 # DIMS Dashboard — ORTHO
 
-**Authors:** Grace Qiyuan Miao, Wim Pouw, Michal Weiss
 
 The ORTHO use case of the DIMS Dashboard, for visualizing multimodal social
 interaction data — time series, multi-perspective video, transcripts, and
 optional analyses (cross-wavelet, trajectory, DTW, ELAN annotations).
 
-Derived from the base project: https://github.com/mikub97/DIMS_dashboard
+Derived from the base project: https://github.com/dims-network/DIMS_dashboard
 
 > **Note:** Videos are **not** included in this repository for privacy. Place
 > them locally under `assets/videos/` (gitignored). All other demo assets are
