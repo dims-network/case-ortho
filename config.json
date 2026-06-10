@@ -1,14 +1,15 @@
 {
-    "videoIDs": ["3120"],
+    "videoIDs": ["CUF00_L0_A01", "CUF00_L0_A02", "CUF00_L0_A03"],
     "dataTypes": {
-        "3120": ["bodysync", "neuralsync", "neuralsync2", "neuralsync3"]
+        "CUF00_L0_A01": ["speed", "vy", "vx"],
+        "CUF00_L0_A02": ["speed", "vy", "vx"],
+        "CUF00_L0_A03": ["speed", "vy", "vx"]
     },
-    "include_RQA": ["bodysync", "neuralsync", "neuralsync2", "neuralsync3"],
-    "include_crosswavelet": ["bodysync", "neuralsync"],
+    "include_crosswavelet": ["vy", "vx"],
     "include_elan": true,
     "defaultWindowSize": 5,
-    "title": "DIMS Dashboard",
-    "subtitle": "Dynamic Interaction and Multimodal Signals",
+    "title": "DIMS Dashboard — ORTHO",
+    "subtitle": "Multimodal Synchrony Exploration Visualization",
     "authors": "Grace Qiyuan Miao, Wim Pouw, Michal Weiss",
     "contacts": "contacts: q.miao@ucla.edu & w.pouw@tilburguniversity.edu & michal.weiss@psych.uw.edu.pl"
 }

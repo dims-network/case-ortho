@@ -4,3 +4,8 @@ __pycache__/
 *.pyc
 .DS_Store
 node_modules/
+
+# Videos excluded for privacy
+assets/videos/
+*.mp4
+*.mp3
