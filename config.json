@@ -9,6 +9,14 @@
         "CUF00_L0_A03": ["speed", "vy", "vx"]
     },
     "include_crosswavelet": ["vy", "vx"],
+    "include_trajectory": true,
+    "trajectory_settings": {
+        "imagePath": "assets/images/path1.png",
+        "startX": 150,
+        "startY": 150,
+        "fieldWidth": 2100,
+        "fieldHeight": 2100
+    },
     "include_elan": true,
     "defaultWindowSize": 5,
     "title": "DIMS Dashboard — ORTHO",
