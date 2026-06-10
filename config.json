@@ -17,6 +17,7 @@
         "fieldWidth": 2100,
         "fieldHeight": 2100
     },
+    "include_dtw": false,
     "include_elan": true,
     "defaultWindowSize": 5,
     "title": "DIMS Dashboard — ORTHO",
