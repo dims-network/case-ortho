@@ -230,6 +230,8 @@
         }
     },
     "include_RQA": [
+        "vx",
+        "vy",
         "gaze_parent",
         "gaze_child"
     ]
