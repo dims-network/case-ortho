@@ -1,0 +1,73 @@
+
+==============================================================================
+  CUF00   session=20250615-0000   db_tracks=13   eaf_segments=6
+  perspectives: wide(org0), parent(org1350), child(org4381)
+==============================================================================
+  videoID          L  trk_id  db_dur eaf_dur     Δ  video
+  ---------------- -- ------ ------- ------- -----  -----
+  CUF00_L0_A01     L0      1    54.8    66.1 -11.3  YES
+  CUF00_L0_A02     L0      1    59.9    62.9  -3.0  YES
+  CUF00_L1_A01     L1      9    67.8    73.3  -5.5  YES
+  CUF00_L1_A02     L1      9    44.0    47.4  -3.4  YES
+  CUF00_L2_A01     L2     10    34.5    42.5  -8.0  YES
+  CUF00_L3_A01     L3     12   156.2   163.7  -7.5  YES
+  CUF00_L3_A02     L3     13   224.9       —     —  no
+  CUF00_L2_A02     L2     11    29.5       —     —  no
+  CUF00_L2_A03     L2     11   107.7       —     —  no
+  CUF00_L1_A03     L1      8    26.1       —     —  no
+  CUF00_L0_A03     L0      3    29.5       —     —  no
+  CUF00_L1_A04     L1      8    25.5       —     —  no
+  CUF00_L3_A03     L3     12    84.4       —     —  no
+  → 13 timeseries datasets, 6 with video, 7 timeseries-only
+
+==============================================================================
+  CUF06   session=20250615-0006   db_tracks=17   eaf_segments=18
+  perspectives: wide(org0), parent(org25700), child(org26450)
+==============================================================================
+  videoID          L  trk_id  db_dur eaf_dur     Δ  video
+  ---------------- -- ------ ------- ------- -----  -----
+  CUF06_L0_A01     L0      1   161.0   167.4  -6.4  YES
+  CUF06_L1_A01     L1      8    85.6    91.8  -6.2  YES
+  CUF06_L2_A01     L2     10    72.6    78.2  -5.6  YES
+  CUF06_L3_A01     L3     12   122.3   127.6  -5.3  YES
+  CUF06_L3_A02     L3     13   260.6   269.5  -8.9  YES
+  CUF06_L3_A03     L3     13    65.8    70.8  -5.0  YES
+  CUF06_L3_A04     L3     12    82.2       —     —  no
+  CUF06_L3_A05     L3     13   220.5   227.9  -7.4  YES
+  CUF06_L1_A02     L1      9    73.8    80.2  -6.4  YES
+  CUF06_L0_A02     L0      7    55.9    60.5  -4.7  YES
+  CUF06_L2_A02     L2     10    49.4    55.1  -5.7  YES
+  CUF06_L1_A03     L1      9    82.0    89.6  -7.5  YES
+  CUF06_L0_A03     L0      3    39.4       —     —  no
+  CUF06_L2_A03     L2     11   116.3   123.5  -7.2  YES
+  CUF06_L3_A06     L3     12   127.2   133.5  -6.3  YES
+  CUF06_L3_A07     L3     12   115.8       —     —  no
+  CUF06_L1_A04     L1      8    32.5    38.8  -6.3  YES
+  → 17 timeseries datasets, 14 with video, 3 timeseries-only
+  ⚠ 4 EAF segment(s) with NO db track (encoded but unplayed/missing):
+      Level Bonus  905.6-907.1s (1.4s, L3)
+      Level 1      1621.0-1692.3s (71.3s, L0)
+      Level Bonus  1985.1-2025.6s (40.5s, L3)
+      Level Bonus  2040.8-2108.9s (68.1s, L3)
+
+==============================================================================
+  CUG22   session=20250616-0022   db_tracks=10   eaf_segments=9
+  perspectives: wide(org0), parent(org122634), child(org126782)
+==============================================================================
+  videoID          L  trk_id  db_dur eaf_dur     Δ  video
+  ---------------- -- ------ ------- ------- -----  -----
+  CUG22_L0_A01     L0      7    68.2    75.4  -7.1  YES
+  CUG22_L1_A01     L1      9    38.8    45.6  -6.9  YES
+  CUG22_L1_A02     L1      9    45.8    49.1  -3.3  YES
+  CUG22_L2_A01     L2     10    35.7    41.4  -5.8  YES
+  CUG22_L3_A01     L3     12    89.5    94.8  -5.4  YES
+  CUG22_L2_A02     L2     10     2.3       —     —  no
+  CUG22_L2_A03     L2     11    28.2    35.5  -7.2  YES
+  CUG22_L2_A04     L2     11    99.1   102.4  -3.2  YES
+  CUG22_L0_A02     L0      4    40.4    46.1  -5.7  YES
+  CUG22_L0_A03     L0      1    29.2    34.0  -4.8  YES
+  → 10 timeseries datasets, 9 with video, 1 timeseries-only
+
+==============================================================================
+  TOTAL: 40 datasets  |  29 with video  |  11 timeseries-only
+==============================================================================

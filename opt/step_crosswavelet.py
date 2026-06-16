@@ -513,7 +513,9 @@ def process_cross_wavelet_pair(video_id, data_type1, data_type2, config):
     
     # Apply edge taper if requested
     if EDGE_TAPER:
-        window = signal.tukey(len(time_common), alpha=TAPER_ALPHA)
+        # scipy >=1.13 moved tukey to scipy.signal.windows
+        tukey = getattr(signal, "tukey", None) or signal.windows.tukey
+        window = tukey(len(time_common), alpha=TAPER_ALPHA)
         data1_interp = data1_interp * window
         data2_interp = data2_interp * window
         if DEBUG_MODE and VERBOSE:
