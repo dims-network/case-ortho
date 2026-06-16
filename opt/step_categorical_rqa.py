@@ -118,10 +118,16 @@ def main():
                 results[dt] = r
         if results:
             out = os.path.join(args.output_dir, f"{video_id}_rqa_data.json")
+            # Merge with any existing entries (e.g. continuous vx/vy RQA).
+            merged = {}
+            if os.path.exists(out):
+                with open(out) as f:
+                    merged = json.load(f).get("rqa_data", {})
+            merged.update(results)
             with open(out, "w") as f:
-                json.dump({"video_id": video_id, "rqa_data": results}, f, indent=2)
+                json.dump({"video_id": video_id, "rqa_data": merged}, f, indent=2)
             n += 1
-            print(f"  -> {out} ({list(results)})")
+            print(f"  -> {out} ({list(merged)})")
     print(f"\nCategorical gaze RQA complete: {n} datasets.")
 
 

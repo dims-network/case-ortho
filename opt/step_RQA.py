@@ -178,23 +178,31 @@ def main():
         print(f"Processing video: {video_id}")
         print(f"{'='*50}")
         
-        # Get data types to process for RQA (remove duplicates)
-        rqa_data_types = list(dict.fromkeys(config['include_RQA']))
-        
+        # Continuous (Euclidean-threshold) RQA only — gaze_* are handled
+        # categorically by step_categorical_rqa.py.
+        rqa_data_types = [dt for dt in dict.fromkeys(config['include_RQA'])
+                          if not dt.startswith('gaze')]
+
         # Process each data type
         rqa_results = {}
         for data_type in rqa_data_types:
             result = process_rqa_for_datatype(video_id, data_type)
             if result:
                 rqa_results[data_type] = result
-        
-        # Save combined data
+
+        # Merge into the per-video rqa file, preserving entries from the other
+        # RQA step (e.g. categorical gaze) instead of overwriting them.
         if rqa_results:
             output_path = os.path.join(args.output_dir, f"{video_id}_rqa_data.json")
+            merged = {}
+            if os.path.exists(output_path):
+                with open(output_path) as f:
+                    merged = json.load(f).get('rqa_data', {})
+            merged.update(rqa_results)
             with open(output_path, 'w') as f:
                 json.dump({
                     'video_id': video_id,
-                    'rqa_data': rqa_results
+                    'rqa_data': merged
                 }, f, indent=2)
             print(f"\nSaved RQA data to {output_path}")
             
