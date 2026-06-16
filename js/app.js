@@ -399,9 +399,35 @@ class DIMSApp {
         });
     }
 
-    // Reconstruct a 2D trajectory by integrating velocity (vx, vy) over time,
-    // then render it over the configured field image. Driven by trajectory_settings.
-    calculateAndShowTrajectory() {
+    // Show the ball trajectory. If the current video has a per-level entry in
+    // config.trajectory_tracks, plot the real ball x/y (game coordinates) over
+    // that level's calibrated path image. Otherwise fall back to reconstructing
+    // the path by integrating velocity (vx, vy) over the global field image.
+    async calculateAndShowTrajectory() {
+        const track = this.config.trajectory_tracks?.[this.currentVideoID];
+        if (track) {
+            const [xRes, yRes] = await Promise.all([
+                this.loadCSV(`assets/timeseries/${this.currentVideoID}_x.csv`),
+                this.loadCSV(`assets/timeseries/${this.currentVideoID}_y.csv`)
+            ]);
+            if (!xRes || !yRes || !xRes.data || !yRes.data) {
+                this.showError('Trajectory Error: missing x/y position data.');
+                return;
+            }
+            const xs = [...xRes.data].sort((a, b) => a.Time - b.Time);
+            const ys = [...yRes.data].sort((a, b) => a.Time - b.Time);
+            const n = Math.min(xs.length, ys.length);
+            const xArr = [], yArr = [], tArr = [];
+            for (let i = 0; i < n; i++) {
+                xArr.push(xs[i].x); yArr.push(ys[i].y); tArr.push(xs[i].Time);
+            }
+            this.trajectoryData = {
+                videoID: this.currentVideoID, x: xArr, y: yArr, time: tArr, track
+            };
+            this.renderTrajectoryPlot();
+            return;
+        }
+
         if (!this.currentData) return;
 
         // Velocity series (CSV column headers must be exactly 'vx' and 'vy')
@@ -447,9 +473,28 @@ class DIMSApp {
 
     renderTrajectoryPlot() {
         const containerId = 'trajectoryContainer';
-        const bgImage = this.config.trajectory_settings?.imagePath || '';
-        const fieldW = this.config.trajectory_settings?.fieldWidth || 100;
-        const fieldH = this.config.trajectory_settings?.fieldHeight || 100;
+        // Per-level path image. trajectory_tracks[videoID].image names a path PNG;
+        // its game-coord calibration {x0,y0,x1,y1} is looked up in config.path_images.
+        // Blank image -> plot the ball path alone (autoranged, no background) until
+        // the user picks one. No track entry -> legacy global trajectory_settings.
+        const track = this.trajectoryData.track;
+        const cal = track && track.image ? this.config.path_images?.[track.image] : null;
+        let bgImage = '', xRange, yRange, imgX, imgY, imgW, imgH;
+        if (cal) {
+            bgImage = `assets/images/${track.image}`;
+            xRange = [cal.x0, cal.x1];
+            yRange = [cal.y0, cal.y1];
+            imgX = cal.x0; imgY = cal.y1;                      // top-left anchor
+            imgW = cal.x1 - cal.x0; imgH = cal.y1 - cal.y0;
+        } else if (track) {
+            xRange = undefined; yRange = undefined;            // autorange, no image
+        } else {
+            bgImage = this.config.trajectory_settings?.imagePath || '';
+            const fieldW = this.config.trajectory_settings?.fieldWidth || 100;
+            const fieldH = this.config.trajectory_settings?.fieldHeight || 100;
+            xRange = [0, fieldW]; yRange = [0, fieldH];
+            imgX = 0; imgY = fieldH; imgW = fieldW; imgH = fieldH;
+        }
 
         const traceFull = {
             x: this.trajectoryData.x,
@@ -488,16 +533,16 @@ class DIMSApp {
             font: { color: 'white' },
             showlegend: true,
             legend: { x: 0, y: 1, font: { size: 10 } },
-            xaxis: { range: [0, fieldW], showgrid: false, zeroline: false, visible: false },
+            xaxis: { range: xRange, showgrid: false, zeroline: false, visible: false },
             yaxis: {
-                range: [0, fieldH], showgrid: false, zeroline: false, visible: false,
+                range: yRange, showgrid: false, zeroline: false, visible: false,
                 scaleanchor: 'x', scaleratio: 1 // 1:1 aspect ratio
             },
             images: bgImage ? [{
                 source: bgImage,
                 xref: 'x', yref: 'y',
-                x: 0, y: fieldH,
-                sizex: fieldW, sizey: fieldH,
+                x: imgX, y: imgY,
+                sizex: imgW, sizey: imgH,
                 sizing: 'stretch', opacity: 0.6, layer: 'below'
             }] : [],
             margin: { t: 40, l: 10, r: 10, b: 10 },
@@ -1398,7 +1443,48 @@ if (arrowData.x.length > 0) {
                 matrix[row][col] = 1;
             }
         });
-        
+
+        // Categorical (gaze) RQA: no line plots — just the recurrence plot, where
+        // hovering a black point reveals which AOI category the gaze was on.
+        if (plotData.categorical) {
+            const labels = vis.labels || sortedData.map(String);
+            const customdata = matrix.map((rowArr, i) =>
+                rowArr.map(v => (v ? labels[i] : null)));
+            const tEnd = sortedTime[sortedTime.length - 1];
+            const catTrace = {
+                x: sortedTime, y: sortedTime, z: matrix, customdata: customdata,
+                type: 'heatmap', colorscale: [[0, 'white'], [1, 'black']],
+                showscale: false,
+                hovertemplate: 'Gaze: %{customdata}<br>Time X: %{x:.1f}s<br>Time Y: %{y:.1f}s<extra></extra>'
+            };
+            const catLayout = {
+                title: { text: `${dataType}<br><sub>Categorical gaze RQA — Recurrence Rate: ${(plotData.recurrence_rate * 100).toFixed(2)}%</sub>`, font: { color: 'white', size: 16 } },
+                paper_bgcolor: '#222', plot_bgcolor: '#333', font: { color: 'white' },
+                xaxis: { title: 'Time (s)', gridcolor: '#444', constrain: 'domain' },
+                yaxis: { title: 'Time (s)', gridcolor: '#444', scaleanchor: 'x', scaleratio: 1 },
+                margin: { t: 80, r: 50, b: 80, l: 80 }, hovermode: 'closest'
+            };
+            if (this.lastClickedPoint !== null) {
+                const ws = parseInt(document.getElementById('windowSize').value) || 5;
+                const st = Math.max(sortedTime[0], this.lastClickedPoint - ws / 2);
+                const et = Math.min(tEnd, this.lastClickedPoint + ws / 2);
+                const ln = (x0, x1, y0, y1) => ({ type: 'line', x0, x1, y0, y1, line: { color: 'yellow', width: 2 }, xref: 'x', yref: 'y' });
+                catLayout.shapes = [
+                    ln(st, st, sortedTime[0], tEnd), ln(et, et, sortedTime[0], tEnd),
+                    ln(sortedTime[0], tEnd, st, st), ln(sortedTime[0], tEnd, et, et),
+                    { type: 'rect', x0: st, x1: et, y0: st, y1: et, fillcolor: 'yellow', opacity: 0.1, line: { width: 0 }, xref: 'x', yref: 'y' }
+                ];
+            }
+            Plotly.newPlot(containerId, [catTrace], catLayout, { responsive: true });
+            document.getElementById(containerId).on('plotly_click', (data) => {
+                if (data.points && data.points.length > 0) {
+                    this.handleTimeClick(data.points[0].x);
+                    setTimeout(() => this.updateRQAHighlights(), 100);
+                }
+            });
+            return;
+        }
+
         // Create traces
         const traces = [
             // Main RQA heatmap
@@ -2002,8 +2088,15 @@ if (arrowData.x.length > 0) {
             if (this.currentPerspective) {
                 return fill(tmpl, this.currentPerspective);
             }
+            // "auto" -> first perspective that actually exists for this video.
+            // videoPerspectives lists the clips present (some sources are
+            // short/broken, so not every level has wide/parent).
+            const avail = this.config.videoPerspectives?.[this.currentVideoID];
+            if (Array.isArray(avail) && avail.length) {
+                return fill(tmpl, avail[0]);
+            }
             if (Array.isArray(this.config.perspectives) && this.config.perspectives.length) {
-                return fill(tmpl, this.config.perspectives[0]); // "auto" -> first perspective
+                return fill(tmpl, this.config.perspectives[0]);
             }
         }
         return fill(fallbackTmpl, '');
@@ -2114,6 +2207,12 @@ if (arrowData.x.length > 0) {
 
                     if (this.currentTab === 'elan' && this.config.include_elan) {
                         this.loadELANData(videoID);
+                    }
+
+                    // Recompute trajectory when switching video while on the tab
+                    // (otherwise the previous video's path/image stays shown).
+                    if (this.currentTab === 'trajectory' && this.config.include_trajectory) {
+                        this.calculateAndShowTrajectory();
                     }
                 } else {
                     this.showStatus('No valid time data found for this video ID.');

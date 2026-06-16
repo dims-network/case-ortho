@@ -5,7 +5,14 @@ __pycache__/
 .DS_Store
 node_modules/
 
-# Videos excluded for privacy
-assets/videos/
+# Code-only repo: ALL data assets kept local & out of git (videos, ELAN with
+# transcribed speech, gaze, timeseries, etc. are personal/sensitive).
+/assets/
+/interactions/
+/wall_analysis/
 *.mp4
+*.MP4
+*.mov
+*.MOV
 *.mp3
+*.xcf
