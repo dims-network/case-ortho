@@ -1,0 +1,38 @@
+start,end,label
+0.0,0.736,Further
+0.736,1.171,My controller
+1.171,1.467,Partner's controller
+1.467,1.555,Ball
+1.555,2.146,Further
+2.146,3.64,Partner's controller
+3.64,4.218,Ball
+4.218,4.471,My controller
+4.471,12.266,Ball
+12.266,12.64,Further
+12.652,13.073,My controller
+13.073,13.712,Ball
+13.712,13.916,Partner's controller
+13.917,15.592,Ball
+15.592,15.795,Partner's controller
+15.795,15.964,Ball
+15.965,18.205,Counter
+18.205,20.993,Ball
+20.993,24.756,My axis
+24.76,25.266,My controller
+25.266,28.567,Ball
+28.567,28.82,My controller
+28.832,28.941,Partner's controller
+28.941,29.326,Ball
+29.339,29.832,My controller
+29.832,30.098,Partner's controller
+30.098,39.387,Ball
+39.399,39.688,My controller
+39.688,41.11,Ball
+41.11,41.808,My controller
+41.808,51.194,Ball
+51.194,51.748,My controller
+51.748,54.929,Ball
+54.941,55.447,My controller
+55.447,55.712,Partner's controller
+55.712,60.001,Ball
+60.013,60.029,Counter

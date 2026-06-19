@@ -1,0 +1,92 @@
+start,end,label
+0.0,0.126,Counter
+0.13,0.644,Ball
+0.646,0.962,My controller
+0.965,1.395,Ball
+1.397,1.622,Further
+1.622,2.31,Ball
+2.31,2.506,Partner's controller
+2.506,3.034,Ball
+3.034,5.69,Further
+5.695,6.038,Ball
+6.038,6.259,Further
+6.261,6.674,Partner's controller
+6.674,7.644,Ball
+7.647,8.299,Further
+8.299,8.631,Ball
+8.631,8.9,My controller
+8.9,10.326,Ball
+10.326,11.263,Go
+11.264,11.666,Ball
+11.668,26.047,Further
+26.059,26.589,Ball
+26.594,27.346,Further
+27.351,27.639,Ball
+27.644,27.987,Partner's controller
+27.992,33.561,Ball
+33.561,34.436,Further
+34.442,36.469,Ball
+36.469,36.8,Partner's controller
+36.806,37.081,Ball
+37.081,37.469,My controller
+37.475,38.124,Ball
+38.137,39.316,Further
+39.331,47.001,Ball
+47.012,47.693,Further
+47.693,48.166,Ball
+48.166,48.309,My controller
+48.309,49.331,Further
+49.331,56.895,Ball
+56.909,57.416,My controller
+57.421,61.875,Ball
+61.875,62.915,Further
+62.919,68.667,Ball
+68.674,69.76,Further
+69.767,70.244,Ball
+70.244,70.787,My controller
+70.793,71.051,Ball
+71.058,71.244,Further
+71.25,72.085,Partner's controller
+72.085,73.853,Ball
+73.853,74.138,My controller
+74.144,75.806,Ball
+75.813,79.078,Further
+79.078,79.932,Ball
+79.932,80.257,Partner's controller
+80.257,81.297,Ball
+81.297,81.628,Partner's controller
+81.628,83.707,Ball
+83.707,85.316,Further
+85.316,85.608,Ball
+85.608,86.489,Further
+86.489,90.787,Ball
+90.787,92.767,Further
+92.767,93.336,My controller
+93.338,100.247,Ball
+100.249,100.839,My controller
+100.843,103.991,Ball
+103.991,104.462,Partner's controller
+104.471,106.76,Ball
+106.768,107.272,Partner's controller
+107.272,108.801,Ball
+108.801,109.644,My controller
+109.644,119.801,Ball
+119.801,120.438,My controller
+120.438,121.272,Ball
+121.272,121.76,Partner's controller
+121.76,130.694,Ball
+130.694,131.19,My controller
+131.19,132.248,Ball
+132.256,132.653,Partner's controller
+132.656,133.075,Ball
+133.075,133.525,My controller
+133.525,137.299,Ball
+137.299,137.892,Partner's controller
+137.892,143.09,Ball
+143.09,143.743,Partner's controller
+143.743,144.289,Ball
+144.289,144.726,My controller
+144.726,150.709,Ball
+150.709,151.201,Partner's controller
+151.201,151.709,My controller
+151.709,156.448,Ball

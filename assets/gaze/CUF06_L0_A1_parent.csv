@@ -1,0 +1,9 @@
+start,end,label
+0.0,0.925,Further
+0.936,1.039,Ball
+1.059,1.189,Partner's controller
+1.201,1.312,Ball
+1.363,1.838,My controller
+1.857,2.114,Further
+2.122,2.367,Ball
+2.371,2.557,My controller

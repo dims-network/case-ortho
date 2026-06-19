@@ -1,0 +1,72 @@
+start,end,label
+0.0,0.358,Further
+0.358,0.561,Ball
+0.565,0.982,Partner's controller
+0.982,1.078,Ball
+1.085,3.022,Further
+3.022,3.436,Ball
+3.436,4.831,Further
+4.831,5.228,My controller
+5.228,5.39,Partner's controller
+5.39,5.727,Ball
+5.727,6.362,Further
+6.364,6.591,Ball
+6.591,6.972,Further
+6.974,7.207,Ball
+7.207,25.595,Further
+25.598,26.341,My controller
+26.341,26.473,Ball
+26.473,27.594,Further
+27.596,27.73,Ball
+27.732,30.334,Further
+30.334,33.553,Ball
+33.553,34.615,Further
+34.615,37.205,Ball
+37.205,38.636,Further
+38.64,39.676,Ball
+39.679,40.086,Further
+40.086,40.901,Ball
+40.901,41.851,Further
+41.851,42.061,Ball
+42.061,42.349,Further
+42.349,45.741,Ball
+45.741,46.047,Further
+46.047,46.478,Ball
+46.478,49.755,Further
+49.755,50.021,Ball
+50.021,50.887,Further
+50.891,54.216,Ball
+54.216,55.025,Further
+55.025,55.28,Ball
+55.285,55.948,Further
+55.978,57.601,Ball
+57.601,58.142,Further
+58.142,62.501,Ball
+62.501,63.727,Further
+63.731,70.744,Ball
+70.744,72.077,Further
+72.082,72.471,Ball
+72.476,72.845,My controller
+72.845,77.309,Ball
+77.309,79.402,Further
+79.408,80.733,Ball
+80.739,81.408,Further
+81.408,84.842,Ball
+84.842,85.011,Further
+85.012,93.138,Ball
+93.138,93.852,My controller
+93.857,99.435,Ball
+99.436,100.126,Further
+100.129,103.042,Ball
+103.042,103.556,My controller
+103.56,104.846,Ball
+104.846,105.97,Further
+105.97,109.185,Ball
+109.185,109.362,Further
+109.362,128.472,Ball
+128.473,129.173,Further
+129.173,130.317,Ball
+130.317,130.939,My controller
+130.95,149.961,Ball
+149.961,150.373,Further
+150.395,156.448,Ball

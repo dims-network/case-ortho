@@ -1,0 +1,12 @@
+start,end,label
+0.0,0.972,My controller
+0.972,1.143,Partner's controller
+1.167,13.143,Ball
+13.143,14.021,Further
+14.021,14.191,Ball
+14.191,17.606,Further
+17.63,42.874,Ball
+42.874,43.338,My controller
+43.338,60.703,Ball
+60.703,61.313,My controller
+61.338,67.999,Ball
