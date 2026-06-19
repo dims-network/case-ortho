@@ -1,0 +1,46 @@
+start,end,label
+0.0,0.166,Further
+0.179,0.907,Ball
+0.907,1.129,Partner's controller
+1.142,1.302,My controller
+1.315,2.068,Partner's controller
+2.08,3.648,Further
+3.66,4.648,Partner's controller
+4.648,5.487,Ball
+5.5,5.981,Further
+5.981,8.092,Ball
+8.092,8.327,Partner's controller
+8.327,11.87,Further
+11.87,13.45,Ball
+13.45,13.771,Further
+13.771,15.191,Ball
+15.191,15.475,Partner's controller
+15.475,16.302,Ball
+16.302,16.561,Partner's controller
+16.561,19.636,Ball
+19.648,20.845,Further
+20.845,21.364,Partner's controller
+21.364,22.031,Further
+22.031,26.166,Ball
+26.166,26.648,Further
+26.648,27.302,Partner's controller
+27.302,28.376,Further
+28.376,28.87,Ball
+28.87,29.611,Partner's controller
+29.611,35.814,Ball
+35.814,36.218,My controller
+36.218,44.899,Ball
+44.92,45.324,Partner's controller
+45.324,46.558,Ball
+46.558,46.899,My controller
+46.92,50.09,Ball
+50.111,50.324,Partner's controller
+50.324,51.814,Ball
+51.814,52.048,Partner's controller
+52.048,54.537,Ball
+54.537,54.771,Partner's controller
+54.771,62.218,Ball
+62.239,64.728,Further
+64.728,70.835,Ball
+70.835,71.75,My controller
+71.75,89.538,Ball

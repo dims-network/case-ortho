@@ -1,0 +1,134 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ANNOTATION_DOCUMENT xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" AUTHOR="" DATE="2026-06-16T13:16:11+01:00" FORMAT="3.0" VERSION="3.0" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv3.0.xsd">
+    <HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
+        <MEDIA_DESCRIPTOR MEDIA_URL="../videos/CUG22_L0_A03_wide.mp4" MIME_TYPE="video/mp4" RELATIVE_MEDIA_URL="../videos/CUG22_L0_A03_wide.mp4" TIME_ORIGIN="0" />
+        <MEDIA_DESCRIPTOR MEDIA_URL="../videos/CUG22_L0_A03_parent.mp4" MIME_TYPE="video/mp4" RELATIVE_MEDIA_URL="../videos/CUG22_L0_A03_parent.mp4" TIME_ORIGIN="0" />
+        <MEDIA_DESCRIPTOR MEDIA_URL="../videos/CUG22_L0_A03_child.mp4" MIME_TYPE="video/mp4" RELATIVE_MEDIA_URL="../videos/CUG22_L0_A03_child.mp4" TIME_ORIGIN="0" />
+        <PROPERTY NAME="URN">urn:nl-mpi-tools-elan-eaf:991b8a7a-efe0-4409-a1c1-6919497181ab</PROPERTY>
+        <PROPERTY NAME="lastUsedAnnotationId">780</PROPERTY>
+    </HEADER>
+    <TIME_ORDER>
+        <TIME_SLOT TIME_SLOT_ID="ts1" TIME_VALUE="0" />
+        <TIME_SLOT TIME_SLOT_ID="ts2" TIME_VALUE="74" />
+        <TIME_SLOT TIME_SLOT_ID="ts3" TIME_VALUE="300" />
+        <TIME_SLOT TIME_SLOT_ID="ts4" TIME_VALUE="1001" />
+        <TIME_SLOT TIME_SLOT_ID="ts5" TIME_VALUE="1001" />
+        <TIME_SLOT TIME_SLOT_ID="ts6" TIME_VALUE="2105" />
+        <TIME_SLOT TIME_SLOT_ID="ts7" TIME_VALUE="2105" />
+        <TIME_SLOT TIME_SLOT_ID="ts8" TIME_VALUE="2309" />
+        <TIME_SLOT TIME_SLOT_ID="ts9" TIME_VALUE="2309" />
+        <TIME_SLOT TIME_SLOT_ID="ts10" TIME_VALUE="2668" />
+        <TIME_SLOT TIME_SLOT_ID="ts11" TIME_VALUE="2668" />
+        <TIME_SLOT TIME_SLOT_ID="ts12" TIME_VALUE="5407" />
+        <TIME_SLOT TIME_SLOT_ID="ts13" TIME_VALUE="5407" />
+        <TIME_SLOT TIME_SLOT_ID="ts14" TIME_VALUE="7162" />
+        <TIME_SLOT TIME_SLOT_ID="ts15" TIME_VALUE="7162" />
+        <TIME_SLOT TIME_SLOT_ID="ts16" TIME_VALUE="7369" />
+        <TIME_SLOT TIME_SLOT_ID="ts17" TIME_VALUE="7369" />
+        <TIME_SLOT TIME_SLOT_ID="ts18" TIME_VALUE="8074" />
+        <TIME_SLOT TIME_SLOT_ID="ts19" TIME_VALUE="8074" />
+        <TIME_SLOT TIME_SLOT_ID="ts20" TIME_VALUE="14858" />
+        <TIME_SLOT TIME_SLOT_ID="ts21" TIME_VALUE="14878" />
+        <TIME_SLOT TIME_SLOT_ID="ts22" TIME_VALUE="16055" />
+        <TIME_SLOT TIME_SLOT_ID="ts23" TIME_VALUE="16055" />
+        <TIME_SLOT TIME_SLOT_ID="ts24" TIME_VALUE="16932" />
+        <TIME_SLOT TIME_SLOT_ID="ts25" TIME_VALUE="16932" />
+        <TIME_SLOT TIME_SLOT_ID="ts26" TIME_VALUE="17714" />
+        <TIME_SLOT TIME_SLOT_ID="ts27" TIME_VALUE="17714" />
+        <TIME_SLOT TIME_SLOT_ID="ts28" TIME_VALUE="29254" />
+        <TIME_SLOT TIME_SLOT_ID="ts29" TIME_VALUE="29368" />
+        <TIME_SLOT TIME_SLOT_ID="ts30" TIME_VALUE="29385" />
+    </TIME_ORDER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="Gaze Parent">
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a416" TIME_SLOT_REF1="ts3" TIME_SLOT_REF2="ts4">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a417" TIME_SLOT_REF1="ts5" TIME_SLOT_REF2="ts6">
+                <ANNOTATION_VALUE>Further</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a418" TIME_SLOT_REF1="ts7" TIME_SLOT_REF2="ts10">
+                <ANNOTATION_VALUE>Parthner's controller</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a419" TIME_SLOT_REF1="ts11" TIME_SLOT_REF2="ts14">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a420" TIME_SLOT_REF1="ts15" TIME_SLOT_REF2="ts16">
+                <ANNOTATION_VALUE>Partner's controller</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a421" TIME_SLOT_REF1="ts17" TIME_SLOT_REF2="ts24">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a422" TIME_SLOT_REF1="ts25" TIME_SLOT_REF2="ts26">
+                <ANNOTATION_VALUE>Partner's controller</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a423" TIME_SLOT_REF1="ts27" TIME_SLOT_REF2="ts28">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+    </TIER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="Gaze Child">
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a765" TIME_SLOT_REF1="ts2" TIME_SLOT_REF2="ts8">
+                <ANNOTATION_VALUE>Further</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a766" TIME_SLOT_REF1="ts9" TIME_SLOT_REF2="ts12">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a767" TIME_SLOT_REF1="ts13" TIME_SLOT_REF2="ts18">
+                <ANNOTATION_VALUE>Further</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a768" TIME_SLOT_REF1="ts19" TIME_SLOT_REF2="ts20">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a769" TIME_SLOT_REF1="ts21" TIME_SLOT_REF2="ts22">
+                <ANNOTATION_VALUE>Further</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a770" TIME_SLOT_REF1="ts23" TIME_SLOT_REF2="ts29">
+                <ANNOTATION_VALUE>Ball</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+    </TIER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="Parent Gesture">
+        </TIER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="Child Gesture">
+        </TIER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="Game events">
+        </TIER>
+    <TIER LINGUISTIC_TYPE_REF="default-lt" TIER_ID="datalogs">
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a780" TIME_SLOT_REF1="ts1" TIME_SLOT_REF2="ts30">
+                <ANNOTATION_VALUE>CUG22_L0_A03</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+    </TIER>
+    <LINGUISTIC_TYPE GRAPHIC_REFERENCES="false" LINGUISTIC_TYPE_ID="default-lt" TIME_ALIGNABLE="true" />
+    <CONSTRAINT DESCRIPTION="Time subdivision of parent annotation's time interval, no time gaps allowed within this interval" STEREOTYPE="Time_Subdivision" />
+    <CONSTRAINT DESCRIPTION="Symbolic subdivision of a parent annotation. Annotations refering to the same parent are ordered" STEREOTYPE="Symbolic_Subdivision" />
+    <CONSTRAINT DESCRIPTION="1-1 association with a parent annotation" STEREOTYPE="Symbolic_Association" />
+    <CONSTRAINT DESCRIPTION="Time alignable annotations within the parent annotation's time interval, gaps are allowed" STEREOTYPE="Included_In" />
+</ANNOTATION_DOCUMENT>

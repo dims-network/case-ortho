@@ -1,0 +1,24 @@
+start,end,label
+0.0,0.229,Partner's controller
+0.231,0.515,Ball
+0.515,0.645,My controller
+0.645,1.815,Partner's controller
+1.817,2.89,My controller
+2.892,3.041,Partner's controller
+3.041,3.999,Ball
+4.001,4.557,My controller
+4.557,13.347,Ball
+13.359,13.631,Further
+13.634,19.549,Ball
+19.556,19.854,My controller
+19.854,21.514,Ball
+21.52,27.608,Further
+27.608,27.76,Ball
+27.76,28.019,My controller
+28.019,43.31,Ball
+43.31,43.537,Further
+43.542,44.784,Ball
+44.784,45.049,Further
+45.055,45.296,Ball
+45.296,46.615,Further
+46.622,54.647,Ball

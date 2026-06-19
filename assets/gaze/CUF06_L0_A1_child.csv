@@ -1,0 +1,120 @@
+start,end,label
+0.0,0.953,Further
+0.953,1.825,Counter
+1.832,2.34,Partner's controller
+2.34,2.955,Further
+2.957,3.66,Ball
+3.661,5.583,Partner's controller
+5.584,6.497,Ball
+6.5,6.784,Partner's controller
+6.784,6.913,Further
+6.913,7.441,My controller
+7.445,7.996,Ball
+8.003,8.5,Further
+8.502,8.892,Ball
+8.892,9.147,Partner's controller
+9.147,9.332,Ball
+9.332,11.121,Further
+11.121,11.887,Ball
+11.892,12.485,Partner's controller
+12.49,13.42,Ball
+13.427,13.677,My controller
+13.682,14.941,Ball
+14.943,15.314,My controller
+15.316,15.566,Ball
+15.571,16.044,My controller
+16.049,18.087,Ball
+18.092,19.059,Further
+19.062,22.158,Ball
+22.268,22.442,Ball
+22.45,22.803,Further
+22.815,25.519,Ball
+25.604,25.838,Further
+25.853,29.802,Ball
+29.818,30.457,Further
+30.46,31.583,Ball
+31.617,32.6,Partner's controller
+32.608,32.839,Ball
+32.85,33.144,Further
+33.15,33.274,My controller
+33.286,33.556,Ball
+33.565,33.804,Further
+33.81,34.34,Partner's controller
+34.352,36.714,Further
+36.721,37.435,Parent
+37.467,40.936,Further
+40.946,40.977,Ball
+40.994,41.167,Further
+41.176,41.398,Partner's controller
+41.404,41.611,Further
+41.615,41.902,My controller
+41.905,44.1,Ball
+44.106,44.3,Further
+44.317,46.308,Ball
+46.317,46.391,Further
+46.401,46.757,Counter
+46.776,51.965,Ball
+51.975,52.498,Counter
+52.511,57.243,Ball
+57.252,57.535,Partner's controller
+57.549,58.664,Ball
+58.678,59.655,Further
+59.66,61.433,Ball
+61.442,62.692,Further
+62.84,63.572,Ball
+63.576,63.895,Further
+63.896,65.132,Ball
+65.134,65.454,Further
+65.455,69.451,Ball
+69.454,70.06,Further
+70.063,71.977,Ball
+71.979,72.721,Further
+72.723,73.209,My controller
+73.214,73.804,Ball
+73.807,74.684,My controller
+74.687,76.969,Ball
+76.971,77.444,My controller
+77.449,78.875,Ball
+78.877,79.522,Further
+79.525,101.289,Ball
+101.314,102.297,Further
+102.298,103.159,Ball
+103.162,103.25,Further
+103.251,104.7,Ball
+104.984,105.25,Ball
+105.253,105.836,Further
+105.838,107.65,Ball
+107.706,108.009,Partner's controller
+108.011,108.787,Ball
+109.055,109.17,Ball
+109.17,111.545,Further
+111.545,112.705,Ball
+112.709,113.242,Further
+113.242,114.378,Ball
+114.383,115.316,Further
+115.316,117.564,Ball
+117.564,117.858,Counter
+117.859,125.747,Ball
+125.747,126.268,Further
+126.268,127.531,Ball
+127.534,127.96,Further
+127.963,128.246,Ball
+128.246,128.287,Further
+128.29,128.404,Ball
+128.406,128.65,Further
+128.65,129.204,Ball
+129.207,129.719,Further
+129.722,138.032,Ball
+138.035,139.282,Further
+139.282,142.29,Ball
+142.293,142.517,Further
+142.517,150.27,Ball
+150.273,150.464,Further
+150.47,152.179,Ball
+152.182,153.653,Further
+153.883,157.049,Ball
+157.052,157.514,Further
+157.517,158.204,Ball
+158.21,159.793,Further
+159.794,161.049,Ball
+161.052,161.17,Counter

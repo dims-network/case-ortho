@@ -1,0 +1,20 @@
+start,end,label
+0.0,0.076,Counter
+0.076,0.389,Further
+0.389,1.056,Ball
+1.056,2.291,Go
+2.291,2.644,Partner's controller
+2.644,3.781,My controller
+3.781,6.683,Ball
+6.683,7.134,Partner's axis
+7.134,7.84,Ball
+7.84,9.252,Further
+9.252,9.546,Partner's axis
+9.546,11.154,Further
+11.154,12.781,Ball
+12.781,13.193,Go
+13.193,13.605,Ball
+13.605,14.487,Go
+14.507,58.056,Ball
+58.056,61.389,Further
+61.389,89.538,Ball
