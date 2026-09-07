@@ -15,3 +15,7 @@ node_modules/
 *.MOV
 *.mp3
 *.xcf
+
+# tools/ needs upstream sources that are not distributed; the path to them is
+# per-machine, like data.local.json.
+tools/sources.local.json

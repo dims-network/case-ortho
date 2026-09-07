@@ -255,5 +255,6 @@
   "include_RQA": [
     "vx",
     "vy"
-  ]
+  ],
+  "include_categorical_rqa": true
 }

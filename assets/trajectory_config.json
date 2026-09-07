@@ -1,0 +1,161 @@
+{
+  "_comment": "Per-track image placement in game-coordinate space. Calibrated from black dot markers. Game coords: (0,0)=bottom-left, Y up.",
+  "tracks": {
+    "1": {
+      "image": "path1.png",
+      "img_game_x0": -165.9,
+      "img_game_y0": -158.0,
+      "img_game_x1": 1920.4,
+      "img_game_y1": 2021.1,
+      "game_end": [
+        830,
+        868
+      ],
+      "estimated": false
+    },
+    "2": {
+      "image": "path2.png",
+      "img_game_x0": -337.6,
+      "img_game_y0": -259.4,
+      "img_game_x1": 2177.0,
+      "img_game_y1": 2049.1,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": true
+    },
+    "3": {
+      "image": "path3.png",
+      "img_game_x0": -301.8,
+      "img_game_y0": -182.0,
+      "img_game_x1": 2020.7,
+      "img_game_y1": 2035.7,
+      "game_end": [
+        1782,
+        1776
+      ],
+      "estimated": false
+    },
+    "4": {
+      "image": "path4.png",
+      "img_game_x0": -197.1,
+      "img_game_y0": -179.8,
+      "img_game_x1": 2162.9,
+      "img_game_y1": 1969.5,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": true
+    },
+    "5": {
+      "image": "path5.png",
+      "img_game_x0": -457.2,
+      "img_game_y0": -288.4,
+      "img_game_x1": 2709.7,
+      "img_game_y1": 2368.7,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": true
+    },
+    "6": {
+      "image": "path6.png",
+      "img_game_x0": -262.5,
+      "img_game_y0": -320.0,
+      "img_game_x1": 2179.9,
+      "img_game_y1": 2056.9,
+      "game_end": [
+        0,
+        1800
+      ],
+      "estimated": true
+    },
+    "7": {
+      "image": "path7.png",
+      "img_game_x0": -239.3,
+      "img_game_y0": -268.8,
+      "img_game_x1": 2125.4,
+      "img_game_y1": 1997.6,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": true
+    },
+    "8": {
+      "image": "path8.png",
+      "img_game_x0": -314.2,
+      "img_game_y0": -250.1,
+      "img_game_x1": 2256.6,
+      "img_game_y1": 2016.3,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": false
+    },
+    "9": {
+      "image": "path5.png",
+      "img_game_x0": -366.8,
+      "img_game_y0": -249.6,
+      "img_game_x1": 2173.7,
+      "img_game_y1": 2050.2,
+      "game_end": [
+        1444,
+        1558
+      ],
+      "estimated": false
+    },
+    "10": {
+      "image": "path6.png",
+      "img_game_x0": -262.5,
+      "img_game_y0": -320.0,
+      "img_game_x1": 2179.9,
+      "img_game_y1": 2056.9,
+      "game_end": [
+        0,
+        1800
+      ],
+      "estimated": true
+    },
+    "11": {
+      "image": "path7.png",
+      "img_game_x0": -239.3,
+      "img_game_y0": -268.8,
+      "img_game_x1": 2125.4,
+      "img_game_y1": 1997.6,
+      "game_end": [
+        1800,
+        1800
+      ],
+      "estimated": false
+    },
+    "12": {
+      "image": "path_cheese.png",
+      "img_game_x0": -146.6,
+      "img_game_y0": -194.9,
+      "img_game_x1": 2015.3,
+      "img_game_y1": 1938.8,
+      "game_end": [
+        1794,
+        1772
+      ],
+      "estimated": false
+    },
+    "13": {
+      "image": "path_maze.png",
+      "img_game_x0": -246.6,
+      "img_game_y0": -200.5,
+      "img_game_x1": 2126.3,
+      "img_game_y1": 1989.5,
+      "game_end": [
+        1785,
+        1776
+      ],
+      "estimated": false
+    }
+  }
+}

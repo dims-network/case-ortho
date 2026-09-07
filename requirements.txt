@@ -1,0 +1,9 @@
+# Analyses for this study.
+#
+# The shared analyses (RQA, cross-RQA, cross-wavelet) come from the dims
+# monorepo. They are NOT on PyPI yet, so install from a checkout:
+#
+#     git clone https://github.com/dims-network/dims
+#     pip install -e ./dims
+#
+# Add anything your own opt/step_*.py needs below.

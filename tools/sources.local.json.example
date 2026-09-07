@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "Copy to sources.local.json (untracked) and point it at the upstream",
+    "sources this study was built from. They are not in the repository:",
+    "ortho.db is 159 MB of raw game telemetry and is not ours to publish.",
+    "Only tools/ needs these -- the dashboard and dims-analysis do not."
+  ],
+  "db": "/absolute/path/to/ortho.db",
+  "viewerImages": "/absolute/path/to/field/images"
+}

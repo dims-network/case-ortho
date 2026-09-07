@@ -1,0 +1,12 @@
+# Rebuilding this study's time series from its upstream sources.
+#
+# Only needed to run tools/. The dashboard needs nothing, and the analyses
+# come from the dims monorepo (see ../requirements.txt).
+#
+# sqlite3 and xml.etree are standard library.
+pandas>=2.0.0
+numpy>=1.24.0
+
+# cut_clips.py shells out to ffmpeg. Install it with your package manager
+# (macOS: brew install ffmpeg), or uncomment for a bundled binary:
+# imageio-ffmpeg>=0.4.9

@@ -1,0 +1,8 @@
+{
+  "_comment": [
+    "Copy to data.local.json (untracked) if this study's recordings live",
+    "outside the repository. serve.py and every analysis step resolve",
+    "assets/ through it. Leave it absent to use the assets/ directory here."
+  ],
+  "assetsRoot": "/absolute/path/to/the/data"
+}

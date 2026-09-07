@@ -17,11 +17,54 @@ import glob
 import sqlite3
 import xml.etree.ElementTree as ET
 
+import json
+
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INTERACTIONS = os.path.join(BASE, "interactions")
-DB_PATH = "/Users/m11/Documents/codes/DIMS_ORTHO_VIEWER/ortho.db"
-TRAJ_CONFIG = "/Users/m11/Documents/codes/DIMS_ORTHO_VIEWER/trajectory_config.json"
-VIEWER_IMAGES = "/Users/m11/Documents/codes/DIMS_ORTHO_VIEWER/assets/images"
+
+
+def _sources():
+    """Where this study's upstream inputs live, from tools/sources.local.json.
+
+    These used to be three absolute paths hardcoded here, pointing at one
+    machine -- and pointing at the wrong place on it after the checkout moved,
+    so the rebuild was broken for its own author. They are untracked because
+    ortho.db is 159 MB of raw game telemetry: too big for the repository and
+    not ours to publish.
+
+    Copy sources.local.json.example to sources.local.json and fill it in.
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "sources.local.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"error: {path} is not readable JSON ({exc})")
+
+
+_SRC = _sources()
+DB_PATH = os.path.expanduser(_SRC.get("db", ""))
+TRAJ_CONFIG = os.path.join(BASE, "assets", "trajectory_config.json")
+VIEWER_IMAGES = os.path.expanduser(_SRC.get("viewerImages", "")) or \
+    os.path.join(BASE, "assets", "images")
+
+
+def require_sources(*names):
+    """Fail with the fix, not with a FileNotFoundError three frames down."""
+    need = {"db": DB_PATH, "viewerImages": VIEWER_IMAGES}
+    missing = [n for n in names if not need.get(n) or not os.path.exists(need[n])]
+    if not missing:
+        return
+    here = os.path.dirname(os.path.abspath(__file__))
+    print("ERROR: this rebuild needs upstream sources the repository does not ship.")
+    for n in missing:
+        print(f"       {n}: {need.get(n) or '(not configured)'}")
+    print(f"\n       Copy {here}/sources.local.json.example to sources.local.json")
+    print("       and point it at them. See tools/README.md.")
+    raise SystemExit(1)
 
 # dyad -> (db session_id, interaction subfolder, eaf filename)
 DYADS = [
@@ -56,6 +99,9 @@ DB_COL = {"speed": "speed", "vx": "vx", "vy": "vy", "x": "point_x", "y": "point_
 
 def db():
     """Read-only sqlite connection."""
+    # Checked here rather than in each caller: this is the one place the
+    # database is opened, so the guard cannot be forgotten by a new tool.
+    require_sources("db")
     return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
 
 
