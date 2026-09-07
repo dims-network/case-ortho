@@ -51,6 +51,17 @@ MONTE_CARLO_ITERATIONS = 0  # Number of Monte Carlo iterations (0 = use theoreti
 # the raw number reveals. Only a Monte Carlo against AR(1) surrogates gives it.
 WCT_SIGNIF_ENABLED = True   # Compute the Monte Carlo coherence significance level
 WCT_SIGNIF_MC_COUNT = 100   # Surrogate pairs per null (pycwt default is 300)
+# The Monte Carlo is seeded, so the same input gives the same significance
+# threshold every time. Unseeded, two runs over identical data disagreed by up
+# to 0.04 on the 95% level (mean 0.012 across scales) -- which propagates into
+# wtc_signif_fraction, i.e. the reported "% of cells significantly coupled"
+# was not reproducible. Set to None to restore the old random behaviour.
+#
+# On mc_count: 100 is a compromise against a cold-run cost of ~45 s. The
+# disk cache below means that cost is paid once per (alpha, grid) rather than
+# per pair, per video and per re-run, so raising this toward pycwt's default
+# of 300 is affordable if a tighter null is wanted for publication.
+WCT_SIGNIF_SEED = 20250906
 
 # ---------- Scale-Averaged Band Parameters ----------
 SCALE_AVG_BAND_AUTO = True  # Auto-calculate scale-averaging band
@@ -196,11 +207,35 @@ def _ar1_alpha(data):
         # Keep it in a sane red-noise range (avoid >=1, which breaks significance).
         return min(max(alpha, 0.0), 0.95)
 
-# Monte Carlo coherence nulls, memoised for the lifetime of the process.
-# The null depends only on the AR(1) coefficients and the wavelet grid, not on
-# the data, so every pair in a video reuses the same one or two results. Without
-# this each pair would pay the full ~30 s.
+# Monte Carlo coherence nulls are expensive and highly reusable, so they are
+# cached at two levels: in memory for this process, and on disk across runs.
+#
+# The null depends only on the AR(1) coefficients and the wavelet grid -- NOT on
+# the data. pycwt's wct_significance() does not even take the data as an
+# argument; it sizes its own surrogates as N = ceil(max_scale * 6), which for a
+# typical grid is ~3000 samples. So an 8-second clip pays exactly the same ~45 s
+# (at mc_count=100) as a 20-minute recording, and every pair, every video and
+# every re-run would pay it again without a cache.
+#
+# pycwt has its own on-disk cache and it cannot be used: the cache filename is
+# built from arctanh(alpha * 4), which is NaN for any alpha > 0.25, so every
+# realistic red-noise coefficient collides into one "wct_sig_nan_nan_..." file
+# and you silently get back a null computed for different coefficients. We pass
+# cache=False and do it ourselves, keyed on everything that actually changes the
+# result -- including mc_count and the wavelet parameters, whose omission is
+# precisely what makes a cache dangerous rather than merely useless.
 _WCT_SIGNIF_CACHE = {}
+
+_WCT_CACHE_DIR = os.environ.get("DIMS_WCT_CACHE_DIR") or os.path.join(
+    os.path.expanduser("~"), ".cache", "dims", "wct_significance")
+WCT_SIGNIF_DISK_CACHE = os.environ.get("DIMS_WCT_CACHE", "1") != "0"
+
+
+def _wct_cache_path(key):
+    """Filename for a null. The key is hashed so no float formatting can collide."""
+    import hashlib
+    digest = hashlib.sha256(repr(key).encode("utf-8")).hexdigest()[:32]
+    return os.path.join(_WCT_CACHE_DIR, f"wct_{digest}.npy")
 
 def _wct_significance_level(alpha1, alpha2, dt, dj, s0, n_scales, mother_wavelet):
     """95% coherence level under an AR(1) null, as a per-scale vector.
@@ -238,11 +273,31 @@ def _wct_significance_level(alpha1, alpha2, dt, dj, s0, n_scales, mother_wavelet
     # decimals can share a result.
     key = (round(float(alpha1), 2), round(float(alpha2), 2),
            round(float(dt), 6), round(float(dj), 6), round(float(s0), 6),
-           int(n_scales))
+           int(n_scales), float(SIGNIFICANCE_LEVEL), int(WCT_SIGNIF_MC_COUNT),
+           str(MOTHER_WAVELET).lower(), float(OMEGA0), WCT_SIGNIF_SEED)
     if key in _WCT_SIGNIF_CACHE:
         return _WCT_SIGNIF_CACHE[key]
 
+    cache_path = _wct_cache_path(key) if WCT_SIGNIF_DISK_CACHE else None
+    if cache_path and os.path.exists(cache_path):
+        try:
+            level = np.load(cache_path)
+            if level.ndim == 1 and len(level) == int(n_scales):
+                if VERBOSE:
+                    print("  Coherence significance: reusing cached null")
+                _WCT_SIGNIF_CACHE[key] = level
+                return level
+        except Exception:  # noqa: BLE001 -- a corrupt cache entry just means recompute
+            pass
+
+    rng_state = None
     try:
+        # pycwt draws its surrogates from numpy's global RNG, so seeding it here
+        # is what makes the threshold reproducible. The previous state is saved
+        # and restored so this does not quietly determine anyone else's randomness.
+        if WCT_SIGNIF_SEED is not None:
+            rng_state = np.random.get_state()
+            np.random.seed(WCT_SIGNIF_SEED)
         # pycwt sizes its output with np.zeros(J + 1), so J here is the number
         # of scales minus one, and must be a Python int (it rejects a float).
         level = wavelet.wct_significance(
@@ -256,10 +311,36 @@ def _wct_significance_level(alpha1, alpha2, dt, dj, s0, n_scales, mother_wavelet
                   f"field omitted")
         _WCT_SIGNIF_CACHE[key] = None
         return None
+    finally:
+        if rng_state is not None:
+            np.random.set_state(rng_state)
 
     level = np.asarray(level, dtype=float).ravel()
     level[~np.isfinite(level) | (level <= 0)] = np.nan   # COI-only scales
     _WCT_SIGNIF_CACHE[key] = level
+
+    if cache_path:
+        # Write via a temporary file and rename, so an interrupted run cannot
+        # leave a truncated .npy that every later run would happily load.
+        # np.save() is handed an open file object deliberately: given a *path*
+        # it appends ".npy" when the name does not already end in it, which
+        # silently breaks the rename below.
+        tmp = cache_path + f".{os.getpid()}.tmp"
+        try:
+            os.makedirs(_WCT_CACHE_DIR, exist_ok=True)
+            with open(tmp, "wb") as fh:
+                np.save(fh, level)
+            os.replace(tmp, cache_path)
+        except Exception as exc:  # noqa: BLE001 -- caching is an optimisation, not a requirement
+            # Report it: a cache that silently never works is worse than none,
+            # because the cost it was meant to remove is paid on every run.
+            if VERBOSE:
+                print(f"  WARNING: could not cache coherence null ({exc})")
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
     return level
 
 def compute_cross_wavelet_standard(data1, data2, time, dt,
