@@ -14,37 +14,9 @@ jobs:
       config_path: "config.json"
       check_assets: true
 
+  # A study must not carry hand-edited core code -- that is what makes a
+  # pinned copy a pin rather than a fork. The check lives in the org's
+  # workflow repo because it needs the released core to compare against, and
+  # because one copy of it cannot drift from another.
   vendor:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      # A study must not carry hand-edited core code. This is what makes a
-      # pinned copy a pin rather than a fork.
-      - name: Vendored core matches the pin
-        run: |
-          python - <<'PY'
-          import hashlib, json, os, sys
-          case = json.load(open("dims-case.json"))
-          def dir_hash(path):
-              h = hashlib.sha256()
-              for root, dirs, files in os.walk(path):
-                  dirs.sort()
-                  for name in sorted(files):
-                      if name.startswith("."): continue
-                      full = os.path.join(root, name)
-                      h.update(os.path.relpath(full, path).encode())
-                      h.update(open(full, "rb").read())
-              return h.hexdigest()
-          bad = False
-          for rel, expected in (case.get("vendorHashes") or {}).items():
-              actual = dir_hash(rel)
-              if actual != expected:
-                  print(f"::error::{rel} does not match dims-core {case.get('dimsCore')}. "
-                        f"Never edit vendored code -- fix it in dims-network/dims and bump the pin.")
-                  bad = True
-          print("vendored core matches" if not bad else "")
-          sys.exit(1 if bad else 0)
-          PY
+    uses: dims-network/.github/.github/workflows/reusable-vendor-check.yml@main
