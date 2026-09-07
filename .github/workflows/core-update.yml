@@ -53,8 +53,13 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: python /tmp/core/tools/dims-case check .
 
+      # Needs "Allow GitHub Actions to create and approve pull requests" in the
+      # organisation's Actions settings. Until that is on, this step fails and
+      # the job below explains why rather than leaving a bare red X every week.
       - name: Open the pull request
+        id: pr
         if: steps.check.outputs.changed == 'true'
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v7
         with:
           branch: core/${{ steps.latest.outputs.tag }}
@@ -70,3 +75,25 @@ jobs:
             next release come through.
 
             Release notes: https://github.com/dims-network/dims/releases/tag/${{ steps.latest.outputs.tag }}
+
+      - name: Explain a permissions failure
+        if: steps.check.outputs.changed == 'true' && steps.pr.outcome == 'failure'
+        run: |
+          {
+            echo "### Core ${{ steps.latest.outputs.tag }} is available, but the pull request could not be opened"
+            echo ""
+            echo "The vendored core was refreshed and verified successfully. Only the"
+            echo "pull request failed, and almost always for one reason:"
+            echo ""
+            echo "**Organisation settings -> Actions -> General -> Workflow permissions**"
+            echo "must allow *Read and write*, and *Allow GitHub Actions to create and"
+            echo "approve pull requests*. Both are off by default."
+            echo ""
+            echo "Until then, update by hand:"
+            echo ""
+            echo '```sh'
+            echo "git clone --depth 1 --branch ${{ steps.latest.outputs.tag }} https://github.com/dims-network/dims.git /tmp/core"
+            echo "python /tmp/core/tools/dims-case sync ."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::Core ${{ steps.latest.outputs.tag }} is available but Actions may not open pull requests here."
