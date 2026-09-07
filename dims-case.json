@@ -11,7 +11,7 @@
     "assets/motion_tracking"
   ],
   "vendorHashes": {
-    "vendor/dims-core": "97c9033c63edf5f9c1ce2a9191f320799d8ca39ac69d9f3cd149c7555f805f82",
-    "vendor/dims-tabs": "264389a1fcba8426676aece96b2da292e9988bb5fa1f3bde700f8d7b6f477cd9"
+    "vendor/dims-core": "d2dbcf9b769f2e5fd515e56f1a373cdf804bdc44a66eb0d4d97cbb7ffba3f19a",
+    "vendor/dims-tabs": "fccda5e1e36f39719f6b85a6fa7ca7a36ecca47319a76d5eb05850892eac9038"
   }
 }
