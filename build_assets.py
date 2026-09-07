@@ -135,9 +135,13 @@ def report_manifest():
         print(f'manifest   : none yet  '
               f'(write one with --write-manifest once the assets are right)')
         return
-    missing, changed, _extra = result
+    missing, changed, extra = result
     if not missing and not changed:
-        print(f'manifest   : assets match assets/{mf.NAME}')
+        # Extra files are not a failure -- a study may hold working files the
+        # manifest was never asked about -- but saying "assets match" while
+        # eight new ones sit there is not true either.
+        more = f'; {len(extra)} file(s) not listed in it' if extra else ''
+        print(f'manifest   : assets match assets/{mf.NAME}{more}')
         return
     print(f'manifest   : {len(missing)} missing, {len(changed)} different '
           f'from assets/{mf.NAME}')

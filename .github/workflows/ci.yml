@@ -6,11 +6,16 @@ on:
   pull_request:
 
 jobs:
+  # The study's own code -- not the vendored core, which is verified byte for
+  # byte against the release below and so needs no syntax check here. Every
+  # study passed python_paths: "" and a js_glob covering only vendored files,
+  # so build_assets.py, every opt/ and tools/ script, and a 1245-line
+  # study-owned tab were never even parsed.
   check:
     uses: dims-network/.github/.github/workflows/reusable-dashboard-ci.yml@main
     with:
-      python_paths: ""
-      js_glob: "vendor/dims-core/*.js vendor/dims-tabs/*.js"
+      python_paths: "build_assets.py opt tools"
+      js_glob: "tabs/*.js"
       config_path: "config.json"
       check_assets: true
 
