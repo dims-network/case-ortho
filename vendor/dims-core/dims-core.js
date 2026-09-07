@@ -3,6 +3,17 @@
 // Theme is driven entirely by CSS custom properties (see css/theme.css).
 // Charts read the active theme's tokens at render time, so adding/changing a
 // theme means editing CSS only.
+// Where this file was loaded from, so assets that belong to the CORE (the
+// logo, the mark) resolve wherever a study chose to vendor it. They used to be
+// looked for under the study's own assets/branding/, which meant every study
+// had to carry its own copy of the DIMS logo -- and the two studies that never
+// did simply showed a broken image.
+const CORE_BASE = (function () {
+    const el = document.currentScript;
+    if (!el || !el.src) return '';
+    return el.src.replace(/[^/]*$/, '');
+})();
+
 const THEMES = ['aurora', 'midnight'];
 
 function readTheme() {
@@ -452,6 +463,12 @@ class DIMSApp {
 
         const select = document.getElementById('themeSelect');
         if (select) {
+            // Options are built from THEMES rather than trusted from the markup.
+            // They used to be hardcoded in every index.html, which meant adding
+            // a theme to the core reached nobody: a study vendors the core but
+            // owns its markup, so the new theme would exist and be unofferable.
+            select.innerHTML = THEMES.map(t =>
+                `<option value="${t}">${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join('');
             select.value = saved;
             select.addEventListener('change', (e) => this.applyTheme(e.target.value));
         }
@@ -469,7 +486,7 @@ class DIMSApp {
         const logo = document.getElementById('logo');
         if (logo) {
             const variant = name === 'aurora' ? 'light' : 'dark';
-            logo.src = `assets/branding/dims-logo-${variant}.png`;
+            logo.src = `${CORE_BASE}branding/dims-logo-${variant}.png`;
         }
 
         if (rerender) this.rerenderAll();

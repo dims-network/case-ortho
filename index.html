@@ -17,7 +17,7 @@
     <!-- Your stylesheets -->
     <link rel="stylesheet" href="vendor/dims-core/css/reset.css">
 
-    <link rel="icon" type="image/png" href="assets/branding/dims-mark.png">
+    <link rel="icon" type="image/png" href="vendor/dims-core/branding/dims-mark.png">
     
     <!-- Your custom scripts -->
     <!-- vendor/ is a pinned copy of the core, written by tooling and verified
@@ -33,16 +33,20 @@
     <script src="vendor/dims-tabs/crosswavelet.js"></script>
     <script src="vendor/dims-tabs/crqa.js"></script>
     <script src="vendor/dims-tabs/elan.js"></script>
-    <!-- Optional tabs: delete a line to remove that tab. Each is inert unless
-         its config key is set, so leaving them costs nothing. -->
-    <script src="vendor/dims-tabs/trajectory.js"></script>
-    <script src="vendor/dims-tabs/dtw.js"></script>
+    <!-- Optional, and inert unless its config key is set. -->
     <script src="vendor/dims-tabs/network.js"></script>
+
+    <!-- study-owned tabs: BEGIN
+         Tabs that only make sense for this study. Same contract
+         as a built-in one: docs/contracts/tab.md -->
+    <script src="tabs/dtw.js"></script>
+    <script src="tabs/trajectory.js"></script>
+    <!-- study-owned tabs: END -->
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <img id="logo" class="logo" src="assets/branding/dims-logo-light.png" alt="DIMS Dashboard">
+            <img id="logo" class="logo" src="vendor/dims-core/branding/dims-logo-light.png" alt="DIMS Dashboard">
             <h3 id="subtitle">Multimodal Synchrony Exploration Visualization</h3>
             <h3 id="authors">Grace Qiyuan Miao, James Trujillo, Landry S. Bulls, Mark A. Thornton, Rick Dale, Wim Pouw</h3>
             <div class="contacts" id="contacts">contacts: q.miao@ucla.edu & w.pouw@tilburguniversity.edu</div>
@@ -61,10 +65,9 @@
             </div>
             <div class="control-group">
                 <label for="themeSelect">Theme:</label>
-                <select id="themeSelect">
-                    <option value="aurora">Aurora</option>
-                    <option value="midnight">Midnight</option>
-                </select>
+                <!-- filled from the core's theme list, so a study inherits
+                     new themes without editing its markup -->
+                <select id="themeSelect"></select>
             </div>
         </div>
         
