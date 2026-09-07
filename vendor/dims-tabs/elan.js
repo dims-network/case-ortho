@@ -7,6 +7,11 @@
 (function () {
     'use strict';
 
+    // Colours come from the host's palette through the documented
+    // accessor, read at draw time so a theme switch is picked up. Tabs
+    // must not reach into the host's script scope: a tab file is a
+    // separate script and cannot rely on seeing its variables.
+
     window.DIMS.extendHost({
         async loadELANData(videoID) {
             this.showStatus('Loading ELAN annotations...');
@@ -72,21 +77,21 @@
                 const color = COLORS[i % COLORS.length];
                 const checked = this.elanSelectedTiers.has(tier.tierID) ? 'checked' : '';
                 return `
-                    <label style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='${THEME.plot}'" onmouseout="this.style.background='transparent'">
+                    <label style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='${window.DIMS.theme().plot}'" onmouseout="this.style.background='transparent'">
                         <input type="checkbox" data-tier="${tier.tierID}" ${checked}
                             style="width:13px;height:13px;accent-color:${color};cursor:pointer;flex-shrink:0;">
                         <span style="display:inline-block;width:11px;height:11px;background:${color};border-radius:2px;flex-shrink:0;"></span>
-                        <span style="color:${THEME.text};font-size:12px;" title="${tier.tierID}">${tier.tierID}</span>
+                        <span style="color:${window.DIMS.theme().text};font-size:12px;" title="${tier.tierID}">${tier.tierID}</span>
                     </label>`;
             }).join('');
 
             container.innerHTML = `
-                <h2 style="color:${THEME.text};margin-bottom:12px;">ELAN Annotations</h2>
-                <div style="background:${THEME.plot};border:1px solid ${THEME.grid};border-radius:6px;padding:8px 10px;margin-bottom:12px;">
+                <h2 style="color:${window.DIMS.theme().text};margin-bottom:12px;">ELAN Annotations</h2>
+                <div style="background:${window.DIMS.theme().plot};border:1px solid ${window.DIMS.theme().grid};border-radius:6px;padding:8px 10px;margin-bottom:12px;">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-                        <span style="color:${THEME.muted};font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Tiers</span>
-                        <button id="elanSelectAll" style="font-size:10px;color:${THEME.muted};background:none;border:none;cursor:pointer;padding:0;" onmouseover="this.style.color='${THEME.text}'" onmouseout="this.style.color='${THEME.muted}'">all</button>
-                        <button id="elanSelectNone" style="font-size:10px;color:${THEME.muted};background:none;border:none;cursor:pointer;padding:0;" onmouseover="this.style.color='${THEME.text}'" onmouseout="this.style.color='${THEME.muted}'">none</button>
+                        <span style="color:${window.DIMS.theme().muted};font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Tiers</span>
+                        <button id="elanSelectAll" style="font-size:10px;color:${window.DIMS.theme().muted};background:none;border:none;cursor:pointer;padding:0;" onmouseover="this.style.color='${window.DIMS.theme().text}'" onmouseout="this.style.color='${window.DIMS.theme().muted}'">all</button>
+                        <button id="elanSelectNone" style="font-size:10px;color:${window.DIMS.theme().muted};background:none;border:none;cursor:pointer;padding:0;" onmouseover="this.style.color='${window.DIMS.theme().text}'" onmouseout="this.style.color='${window.DIMS.theme().muted}'">none</button>
                     </div>
                     <div style="display:flex;flex-wrap:wrap;gap:2px;">${checkboxItems}</div>
                 </div>
@@ -174,17 +179,17 @@
                 const half = windowSize / 2;
                 shapes.push(
                     { type: 'rect', x0: t - half, x1: t + half, y0: 0, y1: N,
-                      fillcolor: THEME.highlightFill, line: { width: 0 }, xref: 'x', yref: 'y' },
+                      fillcolor: window.DIMS.theme().highlightFill, line: { width: 0 }, xref: 'x', yref: 'y' },
                     { type: 'line', x0: t, x1: t, y0: 0, y1: N,
-                      line: { color: THEME.highlight, width: 2, dash: 'dot' }, xref: 'x', yref: 'y' }
+                      line: { color: window.DIMS.theme().highlight, width: 2, dash: 'dot' }, xref: 'x', yref: 'y' }
                 );
             }
 
             const layout = {
-                paper_bgcolor: THEME.paper, plot_bgcolor: THEME.plot, font: { color: THEME.font },
+                paper_bgcolor: window.DIMS.theme().paper, plot_bgcolor: window.DIMS.theme().plot, font: { color: window.DIMS.theme().font },
                 margin: { t: 20, r: 20, b: 50, l: leftMargin },
                 xaxis: {
-                    title: 'Time (s)', color: THEME.font, gridcolor: THEME.grid, zeroline: false,
+                    title: 'Time (s)', color: window.DIMS.theme().font, gridcolor: window.DIMS.theme().grid, zeroline: false,
                     range: this.mergedData
                         ? [0, Math.max(...this.mergedData.map(d => d.Time))]
                         : undefined
@@ -192,8 +197,8 @@
                 yaxis: {
                     tickvals: tiers.map((_, i) => i + 0.5),
                     ticktext: tiers.map(t => t.tierID),
-                    tickfont: { color: THEME.font, size: 10 },
-                    gridcolor: THEME.grid,
+                    tickfont: { color: window.DIMS.theme().font, size: 10 },
+                    gridcolor: window.DIMS.theme().grid,
                     range: [0, N],
                     zeroline: false
                 },

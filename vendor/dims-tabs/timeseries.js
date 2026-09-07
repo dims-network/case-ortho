@@ -8,6 +8,11 @@
 (function () {
     'use strict';
 
+    // Colours come from the host's palette through the documented
+    // accessor, read at draw time so a theme switch is picked up. Tabs
+    // must not reach into the host's script scope: a tab file is a
+    // separate script and cannot rely on seeing its variables.
+
     window.DIMS.extendHost({
         plotTimeseries(datasets, selectedTime = null) {
             if (!datasets || datasets.length === 0) {
@@ -67,7 +72,7 @@
                     xanchor: 'left',
                     yanchor: 'top',
                     showarrow: false,
-                    font: { color: THEME.font, size: 12 }
+                    font: { color: window.DIMS.theme().font, size: 12 }
                 });
             });
             
@@ -75,15 +80,15 @@
             const layout = {
                 title: {
                     text: `ROI Synchrony Over Time for Video ${this.currentVideoID}`,
-                    font: { color: THEME.font }
+                    font: { color: window.DIMS.theme().font }
                 },
-                paper_bgcolor: THEME.paper,
-                plot_bgcolor: THEME.plot,
-                font: { color: THEME.font },
+                paper_bgcolor: window.DIMS.theme().paper,
+                plot_bgcolor: window.DIMS.theme().plot,
+                font: { color: window.DIMS.theme().font },
                 xaxis: {
                     title: 'Time (s)',
-                    color: THEME.font,
-                    gridcolor: THEME.grid
+                    color: window.DIMS.theme().font,
+                    gridcolor: window.DIMS.theme().grid
                 },
                 annotations: annotations,
                 height: 800,
@@ -96,8 +101,8 @@
                 const yAxisKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
                 layout[yAxisKey] = {
                     title: '',
-                    color: THEME.font,
-                    gridcolor: THEME.grid,
+                    color: window.DIMS.theme().font,
+                    gridcolor: window.DIMS.theme().grid,
                     domain: [1 - (i + 1) / datasets.length + 0.02, 1 - i / datasets.length - 0.02]
                 };
             });
@@ -115,8 +120,8 @@
                     y0: 0,
                     y1: 1,
                     yref: `y${i + 1} domain`,
-                    fillcolor: THEME.highlightFill,
-                    line: { color: THEME.highlight, width: 2 }
+                    fillcolor: window.DIMS.theme().highlightFill,
+                    line: { color: window.DIMS.theme().highlight, width: 2 }
                 }));
             }
             
