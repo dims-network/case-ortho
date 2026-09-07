@@ -85,7 +85,7 @@
   "include_dtw": false,
   "include_elan": true,
   "defaultWindowSize": 5,
-  "title": "DIMS Dashboard — ORTHO",
+  "title": "DIMS Dashboard \u2014 ORTHO",
   "subtitle": "Multimodal Synchrony Exploration Visualization",
   "authors": "Grace Qiyuan Miao, Wim Pouw, Michal Weiss",
   "contacts": "contacts: q.miao@ucla.edu & w.pouw@tilburguniversity.edu & michal.weiss@psych.uw.edu.pl",
@@ -243,8 +243,6 @@
   },
   "include_RQA": [
     "vx",
-    "vy",
-    "gaze_parent",
-    "gaze_child"
+    "vy"
   ]
 }
