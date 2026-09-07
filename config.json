@@ -9,7 +9,9 @@
     "CUG22_L0_A1",
     "CUG22_L3_A01",
     "CUG22_L0_A02",
-    "CUG22_L0_A03"
+    "CUG22_L0_A03",
+    "CUF00_L1_A1",
+    "CUF00_L1_A2"
   ],
   "perspectives": [
     "wide",
@@ -68,6 +70,16 @@
       "speed",
       "vy",
       "vx"
+    ],
+    "CUF00_L1_A1": [
+      "speed",
+      "vy",
+      "vx"
+    ],
+    "CUF00_L1_A2": [
+      "speed",
+      "vy",
+      "vx"
     ]
   },
   "include_crosswavelet": [
@@ -82,7 +94,6 @@
     "fieldWidth": 2100,
     "fieldHeight": 2100
   },
-  "include_dtw": false,
   "include_elan": true,
   "defaultWindowSize": 5,
   "title": "DIMS Dashboard \u2014 ORTHO",
