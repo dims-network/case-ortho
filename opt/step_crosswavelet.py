@@ -63,6 +63,25 @@ WCT_SIGNIF_MC_COUNT = 100   # Surrogate pairs per null (pycwt default is 300)
 # of 300 is affordable if a tighter null is wanted for publication.
 WCT_SIGNIF_SEED = 20250906
 
+# ---------- Per-study tuning (config.json) ----------
+# These exist because one study previously had to maintain its own copy of this
+# entire file to change two numbers. They are read from
+#   config.json -> "analysis": { "crosswavelet": { ... } }
+# and fall back to the module defaults below.
+#
+#   maxPeriod      float | null   longest period to compute, in SECONDS
+#   scaleAvgBand   [min, max]     scale-averaging band, in SECONDS
+#
+# Note the units: the legacy SCALE_AVG_* constants below are multiples of dt,
+# which is a different thing and easy to confuse. The config keys are always
+# seconds, so a study never has to know which convention a constant follows.
+CONFIG_TUNING_KEY = "crosswavelet"
+
+
+def _tuning(config):
+    return ((config or {}).get("analysis") or {}).get(CONFIG_TUNING_KEY) or {}
+
+
 # ---------- Scale-Averaged Band Parameters ----------
 SCALE_AVG_BAND_AUTO = True  # Auto-calculate scale-averaging band
 SCALE_AVG_MIN_PERIOD = 2.0  # Minimum period for scale-averaging (in time units)
@@ -345,7 +364,7 @@ def _wct_significance_level(alpha1, alpha2, dt, dj, s0, n_scales, mother_wavelet
 
 def compute_cross_wavelet_standard(data1, data2, time, dt,
                                    mother=MOTHER_WAVELET, omega0=OMEGA0,
-                                   dj=DJ, s0=None, J=None):
+                                   dj=DJ, s0=None, J=None, max_period=None):
     """
     Compute cross-wavelet transform between two time series using pycwt standard approach.
     
@@ -372,6 +391,15 @@ def compute_cross_wavelet_standard(data1, data2, time, dt,
         else:
             J = J_MANUAL / dj  # Use manual setting
     
+    # Cap the longest period, if the study asked for one. For a Morlet wavelet
+    # period ~= scale and scales follow s = s0 * 2^(j*dj), so this is the largest
+    # scale index whose period still fits. Studies with a known upper bound on
+    # the timescale of interest use this to avoid computing scales they will
+    # never look at -- and to keep the scale-averaged band meaningful.
+    if max_period is not None:
+        J_cap = np.floor(np.log2(float(max_period) / s0) / dj)   # floor: stay <= max_period
+        J = min(J, J_cap)
+
     # Select mother wavelet
     if mother.lower() == 'morlet':
         mother_wavelet = wavelet.Morlet(omega0)
@@ -728,7 +756,8 @@ def process_cross_wavelet_pair(video_id, data_type1, data_type2, config):
     # Compute cross-wavelet transform using standard approach
     cwt_results = compute_cross_wavelet_standard(
         data1_interp, data2_interp, time_common, dt,
-        mother=MOTHER_WAVELET, omega0=OMEGA0, dj=DJ
+        mother=MOTHER_WAVELET, omega0=OMEGA0, dj=DJ,
+        max_period=_tuning(config).get("maxPeriod")
     )
     
     # Calculate scale-averaged wavelet power
@@ -736,7 +765,12 @@ def process_cross_wavelet_pair(video_id, data_type1, data_type2, config):
     power = cwt_results['power']
     
     # Determine scale-averaging band
-    if SCALE_AVG_BAND_AUTO:
+    band = _tuning(config).get("scaleAvgBand")
+    if band and len(band) == 2:
+        # Given in seconds, so it means the same thing whatever dt is.
+        avg_period_min = float(band[0])
+        avg_period_max = min(float(band[1]), period[-1])
+    elif SCALE_AVG_BAND_AUTO:
         avg_period_min = S0_FACTOR * dt
         avg_period_max = min(SCALE_AVG_MAX_PERIOD * dt, period[-1] / 2)
     else:
