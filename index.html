@@ -12,17 +12,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
+    <!-- Theme tokens (single source of truth for all colors) -->
+    <link rel="stylesheet" href="vendor/dims-core/css/theme.css">
     <!-- Your stylesheets -->
-    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="vendor/dims-core/css/reset.css">
+
+    <link rel="icon" type="image/png" href="assets/branding/dims-mark.png">
     
     <!-- Your custom scripts -->
-    <script src="js/video-component.js"></script>
-    <script src="js/app.js"></script>
+    <!-- vendor/ is a pinned copy of the core, written by tooling and verified
+         by CI against the release named in dims-case.json. Never edit it: fix
+         the core and bump the pin.
+
+         The host first, then one file per tab. Order matters, because a tab
+         registers into the host. Remove a line and that tab is gone. -->
+    <script src="vendor/dims-core/video-component.js"></script>
+    <script src="vendor/dims-core/dims-core.js"></script>
+    <script src="vendor/dims-tabs/timeseries.js"></script>
+    <script src="vendor/dims-tabs/rqa.js"></script>
+    <script src="vendor/dims-tabs/crosswavelet.js"></script>
+    <script src="vendor/dims-tabs/crqa.js"></script>
+    <script src="vendor/dims-tabs/elan.js"></script>
+    <!-- Optional tabs: delete a line to remove that tab. Each is inert unless
+         its config key is set, so leaving them costs nothing. -->
+    <script src="vendor/dims-tabs/trajectory.js"></script>
+    <script src="vendor/dims-tabs/dtw.js"></script>
+    <script src="vendor/dims-tabs/network.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 id="title">DIMS Dashboard</h1>
+            <img id="logo" class="logo" src="assets/branding/dims-logo-light.png" alt="DIMS Dashboard">
             <h3 id="subtitle">Multimodal Synchrony Exploration Visualization</h3>
             <h3 id="authors">Grace Qiyuan Miao, James Trujillo, Landry S. Bulls, Mark A. Thornton, Rick Dale, Wim Pouw</h3>
             <div class="contacts" id="contacts">contacts: q.miao@ucla.edu & w.pouw@tilburguniversity.edu</div>
@@ -34,15 +54,17 @@
                 <select id="videoSelect">
                     <option value="">Loading...</option>
                 </select>
-                <!-- Perspective switcher (multi-perspective video) -->
-                <label for="perspectiveSelect" style="color:#bbb;margin-left:8px;">Perspective:</label>
-                <select id="perspectiveSelect">
-                    <option value="">auto</option>
-                </select>
             </div>
             <div class="control-group">
                 <label for="windowSize">Window Size (seconds):</label>
                 <input type="number" id="windowSize" value="5" min="1" step="1" style="width: 80px;">
+            </div>
+            <div class="control-group">
+                <label for="themeSelect">Theme:</label>
+                <select id="themeSelect">
+                    <option value="aurora">Aurora</option>
+                    <option value="midnight">Midnight</option>
+                </select>
             </div>
         </div>
         

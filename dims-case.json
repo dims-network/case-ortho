@@ -1,0 +1,17 @@
+{
+  "case": "ortho",
+  "visibility": "public",
+  "dimsCore": "0.0.0-dev",
+  "publishable": [],
+  "restricted": [
+    "assets/videos",
+    "assets/timeseries",
+    "assets/transcripts",
+    "assets/elan",
+    "assets/motion_tracking"
+  ],
+  "vendorHashes": {
+    "vendor/dims-core": "97c9033c63edf5f9c1ce2a9191f320799d8ca39ac69d9f3cd149c7555f805f82",
+    "vendor/dims-tabs": "264389a1fcba8426676aece96b2da292e9988bb5fa1f3bde700f8d7b6f477cd9"
+  }
+}
