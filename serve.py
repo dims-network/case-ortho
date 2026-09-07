@@ -9,7 +9,43 @@ import os
 import sys
 
 
+def _assets_root():
+    """Where this study's data actually lives.
+
+    A private study keeps its recordings out of the repository, so assets/ here
+    is empty and the real files sit elsewhere -- named in data.local.json, which
+    is untracked. Returning None means "the usual place, inside the project".
+    """
+    try:
+        with open('data.local.json') as fh:
+            root = json.load(fh).get('assetsRoot')
+    except (OSError, ValueError):
+        return None
+    if not root:
+        return None
+    root = os.path.abspath(os.path.expanduser(root))
+    return root if os.path.isdir(root) else None
+
+
+ASSETS_ROOT = None   # set in __main__
+
+
 class RangeRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        # Serve /assets/... from the external data directory when one is
+        # configured. Everything else comes from the project as usual.
+        local = super().translate_path(path)
+        if not ASSETS_ROOT:
+            return local
+        rel = path.split('?')[0].lstrip('/')
+        if not rel.startswith('assets/'):
+            return local
+        candidate = os.path.normpath(os.path.join(ASSETS_ROOT, rel[len('assets/'):]))
+        # Refuse to escape the data directory, whatever the request asks for.
+        if not candidate.startswith(ASSETS_ROOT + os.sep) and candidate != ASSETS_ROOT:
+            return local
+        return candidate if os.path.exists(candidate) else local
+
     def send_head(self):
         path = self.translate_path(self.path.split('?')[0])
 
@@ -74,6 +110,8 @@ if __name__ == '__main__':
     project_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(project_dir)
 
+    ASSETS_ROOT = _assets_root()
+
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
     label = os.path.basename(project_dir)
@@ -98,4 +136,6 @@ if __name__ == '__main__':
     print(f'Serving "{label}"', flush=True)
     print(f'  from {project_dir}', flush=True)
     print(f'  at   http://localhost:{port}', flush=True)
+    if ASSETS_ROOT:
+        print(f'  data from {ASSETS_ROOT}  (data.local.json)', flush=True)
     server.serve_forever()

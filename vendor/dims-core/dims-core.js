@@ -102,7 +102,9 @@ class DIMSApp {
             }
             
             this.showStatus('Setting up interface...');
-            
+
+            this.watchViewportSize();
+
             // Setup UI
             this.setupTheme();
             this.setupHeader();
@@ -229,6 +231,64 @@ class DIMSApp {
         } catch (err) {
             console.error(`Tab '${tabName}' failed to activate:`, err);
         }
+
+        this.resizePlotsIn(container);
+    }
+
+    // Re-measure every Plotly figure in a pane that has just been shown.
+    //
+    // Panes are hidden with display:none. A figure drawn -- or last laid out --
+    // while its pane was hidden has no width to measure, so Plotly keeps
+    // whatever size it had and does not notice when the pane reappears. The
+    // symptom is a plot that comes back the wrong size and stays that way until
+    // something forces a relayout, which is why dragging the time slider
+    // "repaired" it: the redraw was the fix, not the slider.
+    //
+    // requestAnimationFrame, because display:block has only just been set and
+    // the element has no layout yet in this frame.
+    resizePlotsIn(root) {
+        const target = root || document;
+        const run = () => {
+            if (typeof Plotly === 'undefined' || !Plotly.Plots || !Plotly.Plots.resize) return;
+            // querySelectorAll walks descendants only, never the root itself. A
+            // tab whose container IS the graph div is therefore invisible to it,
+            // and the timeseries tab is exactly that: it draws straight into
+            // #plotContainer, which is also its pane. The first version of this
+            // shipped with that hole and fixed every tab except the one people
+            // noticed.
+            const figures = [];
+            if (target.matches && target.matches('.js-plotly-plot')) figures.push(target);
+            target.querySelectorAll('.js-plotly-plot').forEach(el => figures.push(el));
+            figures.forEach(el => {
+                // A figure can be removed between the frame being queued and it
+                // running, and one that never finished drawing has no layout to
+                // resize; neither is worth failing a tab switch over.
+                if (!el.isConnected || !el._fullLayout) return;
+                try { Plotly.Plots.resize(el); }
+                catch (err) { console.warn('Could not resize a figure:', err); }
+            });
+        };
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+        else run();
+    }
+
+    // Figures do not follow the window on their own either, and a pane that was
+    // hidden while the window changed size comes back at the old one. Resizing
+    // the visible pane on a settled window size covers the first; switchTab
+    // covers the second.
+    watchViewportSize() {
+        if (this._viewportWatched) return;
+        this._viewportWatched = true;
+        let timer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(timer);
+            // Plotly relayout is not cheap and a drag fires this continuously,
+            // so act on the size the user settled on, not every frame of it.
+            timer = setTimeout(() => {
+                const tab = (this.tabs || []).find(t => t.id === this.currentTab);
+                this.resizePlotsIn(tab ? document.getElementById(this.paneIdFor(tab)) : null);
+            }, 150);
+        });
     }
 
     // Metric strip specs shared by the RQA and cRQA recurrence figures:
