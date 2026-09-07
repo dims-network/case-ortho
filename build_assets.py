@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """build_assets.py — rebuild this study's analysis assets from its time series.
 
-    python build_assets.py              # every video in config.json
-    python build_assets.py --check      # say what would run, change nothing
+    python build_assets.py                   # every video in config.json
+    python build_assets.py --check           # say what would run, change nothing
+    python build_assets.py --write-manifest  # record what assets/ now holds
 
 What this does
     Runs the shared analyses -- RQA, cross-RQA, cross-wavelet -- for whatever
@@ -14,6 +15,13 @@ What it does NOT do
     eye-tracker export, a game log. If this study has such a step, it belongs
     in opt/ and this script runs it -- see the "study-owned steps" section
     below. Until then, put the CSVs in assets/timeseries/ yourself.
+
+Knowing the rebuild is complete
+    assets/MANIFEST.json is a tracked list of names, sizes and checksums --
+    never content. A study whose data lives outside git has nothing else that
+    says what a complete set looks like, so after a rebuild this script
+    compares against it and says what is missing. Write the first one with
+    --write-manifest, once you are satisfied the assets are right.
 
 Where the data lives
     assets/ here by default. If the recordings live outside the repository --
@@ -111,11 +119,41 @@ def run(title, *args):
     subprocess.run([PY, *args], cwd=ROOT, check=True)
 
 
+def report_manifest():
+    """Say whether the assets match the tracked record, if there is one.
+
+    Never fatal. A manifest describes the study as it was when somebody was
+    satisfied with it; a rebuild that produces more, or produces something
+    deliberately different, is not an error. Silence about a rebuild that
+    produced less would be.
+    """
+    if not have_dims_analysis():
+        return
+    from dims_analysis.common import manifest as mf
+    result = mf.compare(str(ROOT))
+    if result is None:
+        print(f'manifest   : none yet  '
+              f'(write one with --write-manifest once the assets are right)')
+        return
+    missing, changed, _extra = result
+    if not missing and not changed:
+        print(f'manifest   : assets match assets/{mf.NAME}')
+        return
+    print(f'manifest   : {len(missing)} missing, {len(changed)} different '
+          f'from assets/{mf.NAME}')
+    for rel in (missing + changed)[:8]:
+        print(f'             {rel}')
+    if len(missing) + len(changed) > 8:
+        print(f'             ... and {len(missing) + len(changed) - 8} more')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--check', action='store_true',
                     help='report what would run and stop')
+    ap.add_argument('--write-manifest', action='store_true',
+                    help='record assets/MANIFEST.json from the assets as they are')
     args = ap.parse_args()
 
     config = load_config()
@@ -147,6 +185,16 @@ def main():
         print(f'\nWARNING: no time series found for: {", ".join(missing)}')
         print(f'         expected files in {asset_dir("timeseries")}/')
 
+    report_manifest()
+
+    if args.write_manifest:
+        require_dims_analysis()
+        from dims_analysis.common import manifest as mf
+        written = mf.write(str(ROOT))
+        n = len(written['files'])
+        print(f'\nwrote assets/{mf.NAME}: {n} file{"" if n == 1 else "s"}')
+        return
+
     if args.check:
         print('\n--check: nothing was run.')
         return
@@ -168,6 +216,7 @@ def main():
     print('\n' + '=' * 66)
     print('  Asset build complete')
     print('=' * 66)
+    report_manifest()
     print('  View it:  python serve.py   ->  http://localhost:8000')
 
 

@@ -2,23 +2,41 @@
 
 `step_categorical_rqa.py` runs recurrence quantification over **categorical**
 gaze codes rather than a continuous signal — where a state is "looking at the
-partner" rather than a number. No other DIMS study has categorical data, so it
-lives here.
+partner" rather than a number, and recurrence is an exact match rather than a
+distance under a threshold. No other DIMS study has categorical data, so it
+lives here rather than in the core; see the step contract for why that is the
+right side of the line.
 
-The shared analyses come from the pinned core:
+## Running it
+
+`build_assets.py` runs it, after the shared analyses, which is the order that
+matters:
 
 ```sh
-pip install -e /path/to/dims/packages/dims-analysis
-dims-analysis run --config config.json
+python build_assets.py            # shared analyses, then this one
 ```
 
-## One thing to know
+It needs `dims-analysis` installed, because it uses the shared path resolver,
+series reader, reduction and merging writer rather than private copies of them:
 
-This writes into the same `assets/rqa/{video}_rqa_data.json` that the shared RQA
-step writes, so ordering matters: run the shared step first, then this one. The
-shared step used to overwrite that file, which is why this fork also carried a
-modified copy of it that merged instead. `dims-analysis` now merges by default,
-so the modified copy is gone — but the ordering still matters.
+```sh
+pip install -e /path/to/dims
+```
 
-Making this a registered step so ordering is not a matter of memory is
-[dims#5](https://github.com/dims-network/dims/issues/5).
+## Two things to know
+
+**It writes into the same file as the shared RQA step.**
+`assets/rqa/{video}_rqa_data.json` holds both the continuous vx/vy RQA and the
+categorical gaze RQA, so ordering matters: the shared step first, then this one.
+`build_assets.py` does exactly that, so the ordering is no longer a matter of
+memory. Both write through `results.write_payload`, which merges and reports
+what it kept and what it replaced — the shared step used to overwrite the file,
+which is why this study once carried its own modified copy of it.
+
+**The reduction is not striding.** The recurrence matrix is built at full
+resolution and then reduced with `reduce.block_binary`. Reducing the *series*
+first and matching on what survived — which this script used to do — keeps a
+recurrence off the main diagonal only when its lag happens to be a multiple of
+the factor, and an off-diagonal line is exactly what a lagged parent/child
+coupling looks like. The longest recording here is 2610 points, so the full
+matrix is under 7 MB and there was never anything to gain by it.

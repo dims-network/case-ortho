@@ -13,5 +13,10 @@
   "vendorHashes": {
     "vendor/dims-core": "570c6005760e20f5148d510d65dbe7d47af68513a41a742d799690e8a7889498",
     "vendor/dims-tabs": "493d038ce665e972ae1b43fed934064f0a65412c04f427ea5c892e09de890b49"
+  },
+  "seededHashes": {
+    "build_assets.py": "ee574d77275864e878807cf865f61af9ecd843d46f68598a2ccfafc44cb8a201",
+    "requirements.txt": "682bddc07d114fa6122d1dc98b9bf973ffcf3f081ea0051bdc7c416966380332",
+    "data.local.json.example": "a2f1d24f9783163d414418d8203ffd9c90d9678fcdeb504e37e56f08fcb40887"
   }
 }

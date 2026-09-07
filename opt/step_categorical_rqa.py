@@ -13,14 +13,25 @@ same JSON shape as step_RQA.py so the dashboard RQA tab can render it:
   assets/rqa/{videoID}_rqa_data.json
 
 Usage:
-    python step_categorical_rqa.py --config config.json --output-dir assets/rqa
+    python step_categorical_rqa.py --config config.json
+
+Requires dims-analysis (`pip install -e /path/to/dims`) for the shared helpers:
+path resolution, the series reader, the reduction and the merging writer.
 """
 
 import os
 import json
 import argparse
 import numpy as np
-import pandas as pd
+
+# The shared helpers, not private copies of them: see the step contract in
+# dims-network/dims, docs/contracts/step.md. `assets` is what makes this run on
+# a study whose data lives outside the repository; `results` is what stops it
+# erasing the continuous RQA that writes into the same file.
+from dims_analysis.common import assets as _assets
+from dims_analysis.common import reduce as _reduce
+from dims_analysis.common import results as _results
+from dims_analysis.common import series as _series
 
 GAZE_TYPES = ["gaze_parent", "gaze_child"]
 MAX_POINTS = 500
@@ -30,18 +41,10 @@ LEGEND_PATH = "assets/gaze/aoi_legend.json"
 def load_legend():
     """code(int) -> AOI label, from the gaze legend written by build_datasets."""
     try:
-        with open(LEGEND_PATH) as f:
+        with open(_assets.resolve(LEGEND_PATH)) as f:
             return {int(k): v for k, v in json.load(f).items()}
     except Exception:
         return {}
-
-
-def downsample(time, codes, max_points=MAX_POINTS):
-    n = len(codes)
-    if n <= max_points:
-        return time, codes
-    f = n // max_points
-    return time[::f], codes[::f]
 
 
 def categorical_recurrence(codes):
@@ -57,34 +60,49 @@ def categorical_recurrence(codes):
 
 
 def process(video_id, data_type, legend):
-    csv = f"assets/timeseries/{video_id}_{data_type}.csv"
-    if not os.path.exists(csv):
-        print(f"  [skip] {video_id} {data_type}: no file")
-        return None
-    df = pd.read_csv(csv)
-    cols = [c for c in df.columns if c != "Time"]
-    if "Time" not in df.columns or not cols:
-        print(f"  [skip] {video_id} {data_type}: bad columns")
-        return None
-    codes = df[cols[0]].fillna(0).astype(int).values
-    time = df["Time"].values
+    csv = _assets.resolve(f"assets/timeseries/{video_id}_{data_type}.csv")
+    loaded = _series.load_or_none(csv, min_points=10)
+    if loaded is None:
+        return None                       # load_or_none has already said why
+    time, values = loaded
+    codes = np.nan_to_num(values, nan=0).astype(int)
     distinct = set(int(x) for x in codes) - {0}
-    if len(codes) < 10 or len(distinct) < 2:
+    if len(distinct) < 2:
         print(f"  [skip] {video_id} {data_type}: degenerate "
               f"({len(codes)} pts, {len(distinct)} AOIs)")
         return None
 
-    t_ds, c_ds = downsample(time, codes)
-    R, rr = categorical_recurrence(c_ds)
+    # Recurrence first, reduction second. Reducing the *series* and then
+    # matching on what survives is striding by another name: a recurrence one
+    # cell off the main diagonal is only kept when its lag happens to be a
+    # multiple of the factor, and an off-diagonal line is precisely what a
+    # lagged parent/child coupling looks like. The full matrix is 2610 points
+    # at the longest here -- under 7 MB -- so there is nothing to gain by it.
+    R_full, rr_full = categorical_recurrence(codes)
+    factor = _reduce.factor_for(len(codes), MAX_POINTS)
+    R = _reduce.block_binary(R_full, factor)
+    t_ds = _reduce.block_mean(time, factor)
+    c_ds = _reduce.block_mode(codes, factor)
+    rr = _reduce.rate_of(R) if factor > 1 else rr_full
+
     rows, colsi = np.where(R == 1)
     sparse = [[int(r), int(c)] for r, c in zip(rows, colsi)]
     print(f"  {video_id} {data_type}: {len(codes)}->{len(c_ds)} pts, "
-          f"{len(distinct)} AOIs, RR={rr*100:.1f}%")
+          f"{len(distinct)} AOIs, RR={rr_full*100:.1f}%")
     return {
         "data_type": data_type,
         "categorical": True,
         "threshold": 0.0,                       # n/a for categorical
-        "recurrence_rate": float(rr),
+        "recurrence_rate": float(rr_full),
+        # What the picture below is, so a reader knows what its axis means.
+        "reduction": {
+            "factor": int(factor),
+            "series": "block mode (categorical)",
+            "matrix": "density-preserving block selection",
+            "n_points_full": int(len(codes)),
+            "rate_full": float(rr_full),
+            "rate_drawn": float(rr),
+        },
         "time_range": [float(time[0]), float(time[-1])],
         "visualization": {
             "time": t_ds.tolist(),
@@ -106,7 +124,11 @@ def main():
 
     with open(args.config) as f:
         config = json.load(f)
-    os.makedirs(args.output_dir, exist_ok=True)
+    out_dir = _assets.resolve(args.output_dir)
+    os.makedirs(out_dir, exist_ok=True)
+    note = _assets.describe()
+    if note:
+        print(note)
     legend = load_legend()
 
     n = 0
@@ -117,17 +139,21 @@ def main():
             if r:
                 results[dt] = r
         if results:
-            out = os.path.join(args.output_dir, f"{video_id}_rqa_data.json")
-            # Merge with any existing entries (e.g. continuous vx/vy RQA).
-            merged = {}
-            if os.path.exists(out):
-                with open(out) as f:
-                    merged = json.load(f).get("rqa_data", {})
-            merged.update(results)
-            with open(out, "w") as f:
-                json.dump({"video_id": video_id, "rqa_data": merged}, f, indent=2)
+            out = os.path.join(out_dir, f"{video_id}_rqa_data.json")
+            # One merge implementation, shared with the continuous RQA step
+            # that writes into this same file. Two copies of a merge is how one
+            # of them ends up clobbering the other.
+            report = _results.write_payload(
+                out, {"video_id": video_id, "rqa_data": results}, compact=False)
             n += 1
-            print(f"  -> {out} ({list(merged)})")
+            # Say both halves out loud: what was already in the file and
+            # survived, and what this run overwrote. A silent replacement is
+            # how the gaze RQA disappeared from this study once already.
+            kept = report["kept"].get("rqa_data") or []
+            over = report["replaced"].get("rqa_data") or []
+            detail = f", kept {', '.join(kept)}" if kept else ""
+            detail += f", replaced {', '.join(over)}" if over else ""
+            print(f"  -> {out} ({', '.join(results)}{detail})")
     print(f"\nCategorical gaze RQA complete: {n} datasets.")
 
 
