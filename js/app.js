@@ -53,7 +53,15 @@ class DIMSApp {
 
     setupTabs() {
         const hasRQA = this.config.include_RQA && this.config.include_RQA.length > 0;
-        const hasCrossWavelet = this.config.include_crosswavelet && this.config.include_crosswavelet.length >= 2;
+        // Cross-wavelet accepts two config forms, and they gate differently:
+        // explicit pairs [[a,b]] where ONE entry is already a valid analysis,
+        // and the legacy flat list [a,b,c] which needs two types to form a
+        // pair at all. Testing length >= 2 for both silently hid the tab from
+        // any study that asked for exactly one pair -- while the analysis had
+        // run and its output was sitting in assets/.
+        const cwConfig = this.config.include_crosswavelet;
+        const hasCrossWavelet = Array.isArray(cwConfig) && cwConfig.length > 0 &&
+            (Array.isArray(cwConfig[0]) || cwConfig.length >= 2);
         const hasTrajectory = this.config.include_trajectory === true;
         const hasDTW = !!this.config.include_dtw;
         const hasELAN = !!this.config.include_elan;
