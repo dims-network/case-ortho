@@ -320,6 +320,12 @@
                     if (isSignificant) { // Only show arrows within 95% confidence ridges
                         const coherence = vis.coherence ? vis.coherence[i][j] : 0;
                         const phase = vis.phase[i][j];
+
+                        // A cell can be null: where neither signal has power in
+                        // this band there is no phase relationship to draw. Skip
+                        // it rather than computing an arrow from NaN.
+                        if (phase === null || phase === undefined || Number.isNaN(phase)) continue;
+                        if (coherence === null || coherence === undefined) continue;
                         
                         // Convert phase to arrow symbol
                         // Phase is in radians: 0 = in phase, π/2 = signal1 leads, π = anti-phase, -π/2 = signal2 leads
