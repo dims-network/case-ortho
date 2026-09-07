@@ -44,6 +44,19 @@ class RangeRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         return f
 
+    def handle_one_request(self):
+        # The browser aborts a transfer whenever the user seeks in a video --
+        # which is the whole reason this server supports Range requests -- and
+        # the resulting BrokenPipeError escaped as a 25-line traceback on every
+        # seek. A console that cries wolf is a console people stop reading.
+        #
+        # Caught here rather than by silencing socketserver's error handler,
+        # because that would hide genuine server errors too.
+        try:
+            super().handle_one_request()
+        except (BrokenPipeError, ConnectionResetError):
+            self.close_connection = True
+
     def log_message(self, fmt, *args):
         # Suppress noisy request logs; only show errors
         if args and str(args[1]) not in ('200', '206', '304'):
