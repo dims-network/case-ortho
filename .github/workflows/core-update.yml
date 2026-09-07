@@ -1,0 +1,72 @@
+name: Core update
+
+# Each study checks for itself whether a newer core has been released, and opens
+# a pull request in its own repository. Pull rather than push: the core would
+# otherwise need write access to every study, which means a personal access
+# token that somebody has to create, own and rotate. The built-in token is
+# enough to open a pull request in the repository it belongs to.
+on:
+  schedule:
+    - cron: "0 6 * * 1"      # Monday morning
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Find the newest core release
+        id: latest
+        run: |
+          latest=$(git ls-remote --tags --refs https://github.com/dims-network/dims.git                    | sed 's|.*refs/tags/||' | grep '^v' | sort -V | tail -1)
+          echo "tag=${latest}" >> "$GITHUB_OUTPUT"
+          echo "version=${latest#v}" >> "$GITHUB_OUTPUT"
+          echo "pinned=$(python -c "import json;print(json.load(open('dims-case.json'))['dimsCore'])")" >> "$GITHUB_OUTPUT"
+
+      - name: Up to date?
+        id: check
+        run: |
+          if [ -z "${{ steps.latest.outputs.version }}" ] ||              [ "${{ steps.latest.outputs.version }}" = "${{ steps.latest.outputs.pinned }}" ]; then
+            echo "nothing to do: pinned ${{ steps.latest.outputs.pinned }}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh the vendored core
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git clone -q --depth 1 --branch "${{ steps.latest.outputs.tag }}"             https://github.com/dims-network/dims.git /tmp/core
+          python /tmp/core/tools/dims-case sync . --version "${{ steps.latest.outputs.version }}"
+
+      # A pull request opened with the built-in token does not start other
+      # workflows, so the check that matters runs here, before the PR exists.
+      - name: Verify what we are about to propose
+        if: steps.check.outputs.changed == 'true'
+        run: python /tmp/core/tools/dims-case check .
+
+      - name: Open the pull request
+        if: steps.check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: core/${{ steps.latest.outputs.tag }}
+          title: "Update DIMS core to ${{ steps.latest.outputs.tag }}"
+          commit-message: "Update DIMS core to ${{ steps.latest.outputs.tag }}"
+          body: |
+            Pinned core moves from `${{ steps.latest.outputs.pinned }}` to
+            `${{ steps.latest.outputs.version }}`.
+
+            `vendor/` was refreshed by `dims-case sync` and verified against the
+            release before this pull request was opened. Nothing here was edited
+            by hand — if something in the core is wrong, fix it there and let the
+            next release come through.
+
+            Release notes: https://github.com/dims-network/dims/releases/tag/${{ steps.latest.outputs.tag }}
