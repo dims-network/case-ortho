@@ -7,6 +7,11 @@
 (function () {
     'use strict';
 
+    // Colours come from the host's palette through the documented
+    // accessor, read at draw time so a theme switch is picked up. Tabs
+    // must not reach into the host's script scope: a tab file is a
+    // separate script and cannot rely on seeing its variables.
+
     window.DIMS.extendHost({
         async loadCRQAData(videoID) {
             this.showStatus('Loading cross-RQA data...');
@@ -63,7 +68,7 @@
 
                 const rpDiv = document.createElement('div');
                 rpDiv.id = `crqa-plot-${index}`;
-                rpDiv.style.backgroundColor = THEME.paper;
+                rpDiv.style.backgroundColor = window.DIMS.theme().paper;
                 rpDiv.style.padding = '10px';
                 rpDiv.style.borderRadius = '5px';
                 block.appendChild(rpDiv);

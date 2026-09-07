@@ -7,6 +7,11 @@
 (function () {
     'use strict';
 
+    // Colours come from the host's palette through the documented
+    // accessor, read at draw time so a theme switch is picked up. Tabs
+    // must not reach into the host's script scope: a tab file is a
+    // separate script and cannot rely on seeing its variables.
+
     window.DIMS.extendHost({
         async loadCrossWaveletData(videoID) {
             this.showStatus('Loading cross-wavelet data...');
@@ -70,7 +75,7 @@
                 const plotDiv = document.createElement('div');
                 plotDiv.id = `cw-plot-${index}`;
                 plotDiv.style.height = '800px'; // Increased for 4-panel layout
-                plotDiv.style.backgroundColor = THEME.paper;
+                plotDiv.style.backgroundColor = window.DIMS.theme().paper;
                 plotDiv.style.padding = '10px';
                 plotDiv.style.borderRadius = '5px';
                 
@@ -296,7 +301,7 @@
                 textfont: {
                     family: 'Arial',
                     size: 16,
-                    color: THEME.font
+                    color: window.DIMS.theme().font
                 },
                 textposition: 'middle center',
                 xaxis: 'x',
@@ -400,7 +405,7 @@ if (arrowData.x.length > 0) {
                     y: coiLog2,
                     type: 'scatter',
                     mode: 'lines',
-                    line: { color: THEME.trace, width: 2, dash: 'dash' },
+                    line: { color: window.DIMS.theme().trace, width: 2, dash: 'dash' },
                     xaxis: 'x',
                     yaxis: 'y',
                     name: 'COI',
@@ -417,7 +422,7 @@ if (arrowData.x.length > 0) {
                     y: log2Period,
                     type: 'scatter',
                     mode: 'lines',
-                    line: { color: THEME.trace, width: 2 },
+                    line: { color: window.DIMS.theme().trace, width: 2 },
                     name: 'Global XWT Power',
                     xaxis: 'x2',
                     yaxis: 'y2',
@@ -434,7 +439,7 @@ if (arrowData.x.length > 0) {
                     y: vis.scale_avg_power,
                     type: 'scatter',
                     mode: 'lines',
-                    line: { color: THEME.trace, width: 2 },
+                    line: { color: window.DIMS.theme().trace, width: 2 },
                     name: 'Scale-Avg XWT Power',
                     xaxis: 'x3',
                     yaxis: 'y3',
@@ -465,11 +470,11 @@ if (arrowData.x.length > 0) {
                     `<sub style="font-size: 9px;">Phase arrows (in 95% ridges): ` +
                     `→ in-phase (0°) | ↗ ${dataType1} leads 45° | ↑ ${dataType1} leads 90° | ↖ ${dataType1} leads 135° | ` +
                     `← anti-phase (180°) | ↙ ${dataType2} leads 135° | ↓ ${dataType2} leads 90° | ↘ ${dataType2} leads 45°</sub>`,
-                font: { color: THEME.font, size: 14 }
+                font: { color: window.DIMS.theme().font, size: 14 }
             },
-                paper_bgcolor: THEME.paper,
-                plot_bgcolor: THEME.plot,
-                font: { color: THEME.font, size: 10 },
+                paper_bgcolor: window.DIMS.theme().paper,
+                plot_bgcolor: window.DIMS.theme().plot,
+                font: { color: window.DIMS.theme().font, size: 10 },
                 showlegend: true,
                 legend: {
                     x: 0.75,
@@ -484,14 +489,14 @@ if (arrowData.x.length > 0) {
                     anchor: 'y4',
                     title: '',
                     showticklabels: false,
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 yaxis4: {
                     domain: [0.78, 0.95],
                     anchor: 'x4',
                     title: 'Normalized',
                     titlefont: { size: 10 },
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 
                 // PANEL B: Cross-wavelet power spectrum (middle-left)
@@ -500,7 +505,7 @@ if (arrowData.x.length > 0) {
                     anchor: 'y',
                     title: '',
                     showticklabels: false,
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 yaxis: {
                     domain: [0.38, 0.72],
@@ -509,7 +514,7 @@ if (arrowData.x.length > 0) {
                     tickmode: 'array',
                     tickvals: periodTicks,
                     ticktext: periodTickLabels,
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 
                 // PANEL C: Global spectrum (middle-right)
@@ -518,7 +523,7 @@ if (arrowData.x.length > 0) {
                     anchor: 'y2',
                     title: 'Power',
                     titlefont: { size: 10 },
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 yaxis2: {
                     domain: [0.38, 0.72],
@@ -528,7 +533,7 @@ if (arrowData.x.length > 0) {
                     tickmode: 'array',
                     tickvals: periodTicks,
                     ticktext: periodTickLabels,
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 
                 // PANEL D: Scale-averaged power (bottom)
@@ -536,7 +541,7 @@ if (arrowData.x.length > 0) {
                     domain: [0.08, 0.70],
                     anchor: 'y3',
                     title: 'Time (s)',
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 yaxis3: {
                     domain: [0.05, 0.30],
@@ -545,7 +550,7 @@ if (arrowData.x.length > 0) {
                         text: `${pairData.scale_avg_band ? pairData.scale_avg_band[0].toFixed(1) + '–' + pairData.scale_avg_band[1].toFixed(1) : '2–8'}s avg`,
                         font: { size: 10 }
                     },
-                    gridcolor: THEME.grid
+                    gridcolor: window.DIMS.theme().grid
                 },
                 
                 margin: { t: 70, r: 30, b: 50, l: 60 },
@@ -569,14 +574,14 @@ if (arrowData.x.length > 0) {
                         type: 'line',
                         x0: startTime, x1: startTime,
                         y0: 0, y1: 1,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x4', yref: 'y4 domain'
                     },
                     {
                         type: 'line',
                         x0: endTime, x1: endTime,
                         y0: 0, y1: 1,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x4', yref: 'y4 domain'
                     },
                     // Highlight box on time series
@@ -584,7 +589,7 @@ if (arrowData.x.length > 0) {
                         type: 'rect',
                         x0: startTime, x1: endTime,
                         y0: 0, y1: 1,
-                        fillcolor: THEME.highlight,
+                        fillcolor: window.DIMS.theme().highlight,
                         opacity: 0.15,
                         line: { width: 0 },
                         xref: 'x4', yref: 'y4 domain'
@@ -594,14 +599,14 @@ if (arrowData.x.length > 0) {
                         type: 'line',
                         x0: startTime, x1: startTime,
                         y0: minLog2Period, y1: maxLog2Period,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x', yref: 'y'
                     },
                     {
                         type: 'line',
                         x0: endTime, x1: endTime,
                         y0: minLog2Period, y1: maxLog2Period,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x', yref: 'y'
                     },
                     // Highlight box on XWT spectrum
@@ -609,7 +614,7 @@ if (arrowData.x.length > 0) {
                         type: 'rect',
                         x0: startTime, x1: endTime,
                         y0: minLog2Period, y1: maxLog2Period,
-                        fillcolor: THEME.highlight,
+                        fillcolor: window.DIMS.theme().highlight,
                         opacity: 0.15,
                         line: { width: 0 },
                         xref: 'x', yref: 'y'
@@ -619,14 +624,14 @@ if (arrowData.x.length > 0) {
                         type: 'line',
                         x0: startTime, x1: startTime,
                         y0: 0, y1: 1,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x3', yref: 'y3 domain'
                     },
                     {
                         type: 'line',
                         x0: endTime, x1: endTime,
                         y0: 0, y1: 1,
-                        line: { color: THEME.highlight, width: 2 },
+                        line: { color: window.DIMS.theme().highlight, width: 2 },
                         xref: 'x3', yref: 'y3 domain'
                     },
                     // Highlight box on scale-averaged plot
@@ -634,7 +639,7 @@ if (arrowData.x.length > 0) {
                         type: 'rect',
                         x0: startTime, x1: endTime,
                         y0: 0, y1: 1,
-                        fillcolor: THEME.highlight,
+                        fillcolor: window.DIMS.theme().highlight,
                         opacity: 0.15,
                         line: { width: 0 },
                         xref: 'x3', yref: 'y3 domain'

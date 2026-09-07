@@ -857,19 +857,15 @@ class DIMSApp {
                     
                     this.showStatus(`Loaded data for ${videoID}. Click on any point to segment video.`);
                     
-                    // Load RQA data if on RQA tab
-                    if (this.currentTab === 'rqa' && this.config.include_RQA) {
-                        this.loadRQAData(videoID);
-                    }
-                    
-                    // Load cross-wavelet data if on cross-wavelet tab
-                    if (this.currentTab === 'crosswavelet' && this.config.include_crosswavelet) {
-                        this.loadCrossWaveletData(videoID);
-                    }
-
-                    if (this.currentTab === 'elan' && this.config.include_elan) {
-                        this.loadELANData(videoID);
-                    }
+                    // Redraw whichever tab is on screen for the new video.
+                    //
+                    // Changing video resets every tab's _activated flag so it
+                    // recomputes when next shown -- but the VISIBLE tab never
+                    // gets a "next shown", so it kept displaying the previous
+                    // video until you switched away and back. This was two
+                    // hardcoded branches naming rqa and crosswavelet, which is
+                    // also why the other tabs never refreshed at all.
+                    if (this.currentTab) this.switchTab(this.currentTab);
                 } else {
                     this.showStatus('No valid time data found for this video ID.');
                 }
