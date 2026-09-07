@@ -94,15 +94,6 @@ def process(video_id, data_type, legend):
         "categorical": True,
         "threshold": 0.0,                       # n/a for categorical
         "recurrence_rate": float(rr_full),
-        # What the picture below is, so a reader knows what its axis means.
-        "reduction": {
-            "factor": int(factor),
-            "series": "block mode (categorical)",
-            "matrix": "density-preserving block selection",
-            "n_points_full": int(len(codes)),
-            "rate_full": float(rr_full),
-            "rate_drawn": float(rr),
-        },
         "time_range": [float(time[0]), float(time[-1])],
         "visualization": {
             "time": t_ds.tolist(),
@@ -110,6 +101,18 @@ def process(video_id, data_type, legend):
             "labels": [legend.get(int(x), str(int(x))) for x in c_ds],
             "matrix_size": len(t_ds),
             "sparse_matrix": sparse,
+            # Inside `visualization`, beside the picture it describes -- the
+            # same place the shared RQA step writes it and the place the
+            # assets contract tells a tab to look. It was one level up, which
+            # meant a reader following the contract found nothing.
+            "reduction": {
+                "factor": int(factor),
+                "series": "block mode (categorical)",
+                "matrix": "density-preserving block selection",
+                "n_points_full": int(len(codes)),
+                "rate_full": float(rr_full),
+                "rate_drawn": float(rr),
+            },
         },
         "full_data": {"n_points": int(len(codes)),
                       "time_range": [float(time[0]), float(time[-1])]},
