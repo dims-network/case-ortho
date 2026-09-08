@@ -52,18 +52,18 @@ window.DIMS = window.DIMS || {
     // sentence for the reader when it was not.
     //
     // The failure this exists to prevent: a study bumps `dimsCore` without
-    // rebuilding its assets, and every analysis panel comes up blank. That is
-    // the one thing v2.0.0 most wants nobody to discover by looking at a
-    // dashboard -- the payload format changed, so an old file has no field the
-    // new tabs read, and drawing nothing is indistinguishable from having no
-    // data at all.
+    // rebuilding its assets, and every analysis panel comes up blank. A release
+    // that moves the payload format leaves an old file with no field the new
+    // tabs read, and drawing nothing is indistinguishable from having no data
+    // at all -- so say which it is. PAYLOAD_VERSION, not the release number, is
+    // what decides: release numbering has changed once already.
     //
     // Returns null when the payload is readable.
     payloadProblem(payload, what) {
         const version = payload && payload.payload_version;
         if (version === DIMS.PAYLOAD_VERSION) return null;
         if (version === undefined || version === null) {
-            return `This ${what} was produced by a core older than 2.0.0, whose `
+            return `This ${what} was produced by an older core, whose `
                  + `payload format this dashboard cannot read. Rebuild the `
                  + `study's assets: python build_assets.py`;
         }
