@@ -11,8 +11,8 @@
     "assets/motion_tracking"
   ],
   "vendorHashes": {
-    "vendor/dims-core": "28be12cd5d6c255cc090e52996a354490c02288e27dc87b30d39f4bc349ddc90",
-    "vendor/dims-tabs": "51ee5e981c5c8e7d65c8aefaa2b201e7bcbcdd4af13dfad14e7d6eca4f764bbf"
+    "vendor/dims-core": "84b28a06f5da865f4d2a167238fb746916ec1c6d2ec959974a8548a41a63eecb",
+    "vendor/dims-tabs": "e0c1ec9c46da247510def999a32ecd964a30eb314d646284bef2696683775dd5"
   },
   "seededHashes": {
     "build_assets.py": "fc747a3a1b97b2f37fc9e42cbcba6017a57fc416ba2a591061935c6b163cf6b2",

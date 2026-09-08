@@ -30,6 +30,9 @@
                 console.log('Cross-wavelet data loaded:', cwData);
                 
                 // Validate data structure
+                const stale = window.DIMS.payloadProblem(cwData, 'cross-wavelet output');
+                if (stale) { this.showError(stale); return; }
+
                 if (!cwData.crosswavelet_pairs || Object.keys(cwData.crosswavelet_pairs).length === 0) {
                     this.showError('Cross-wavelet data is empty or invalid format.');
                     console.error('Invalid cross-wavelet data structure:', cwData);

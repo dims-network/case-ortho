@@ -32,6 +32,9 @@
                 console.log('RQA data loaded:', rqaData);
                 
                 // Validate data structure
+                const stale = window.DIMS.payloadProblem(rqaData, 'RQA output');
+                if (stale) { this.showError(stale); return; }
+
                 if (!rqaData.rqa_data || Object.keys(rqaData.rqa_data).length === 0) {
                     this.showError('RQA data is empty or invalid format.');
                     console.error('Invalid RQA data structure:', rqaData);

@@ -48,6 +48,36 @@ window.DIMS = window.DIMS || {
     // docs/contracts/analysis-output.md and common/arrays.py.
     PAYLOAD_VERSION: 2,
 
+    // Whether a payload was written by a core this build can read, and a
+    // sentence for the reader when it was not.
+    //
+    // The failure this exists to prevent: a study bumps `dimsCore` without
+    // rebuilding its assets, and every analysis panel comes up blank. That is
+    // the one thing v2.0.0 most wants nobody to discover by looking at a
+    // dashboard -- the payload format changed, so an old file has no field the
+    // new tabs read, and drawing nothing is indistinguishable from having no
+    // data at all.
+    //
+    // Returns null when the payload is readable.
+    payloadProblem(payload, what) {
+        const version = payload && payload.payload_version;
+        if (version === DIMS.PAYLOAD_VERSION) return null;
+        if (version === undefined || version === null) {
+            return `This ${what} was produced by a core older than 2.0.0, whose `
+                 + `payload format this dashboard cannot read. Rebuild the `
+                 + `study's assets: python build_assets.py`;
+        }
+        if (version > DIMS.PAYLOAD_VERSION) {
+            return `This ${what} was produced by a newer core (payload version `
+                 + `${version}; this dashboard reads ${DIMS.PAYLOAD_VERSION}). `
+                 + `Update the vendored core, or rebuild the assets with the `
+                 + `version pinned here.`;
+        }
+        return `This ${what} is in payload version ${version} and this dashboard `
+             + `reads ${DIMS.PAYLOAD_VERSION}. Rebuild the study's assets: `
+             + `python build_assets.py`;
+    },
+
     // Large arrays travel base64-encoded, so a study ships one file format
     // rather than a JSON for the browser and an .npz beside it that mostly
     // duplicated it. Two encodings, each naming itself:

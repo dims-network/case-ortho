@@ -219,6 +219,8 @@
             try {
                 const path = `assets/crosswavelet/${videoID}_crosswavelet_data.json`;
                 const data = await this.loadJSON(path);
+                const stale = data && window.DIMS.payloadProblem(data, 'cross-wavelet output');
+                if (stale) { this.showError(stale); return; }
                 if (!data || !data.crosswavelet_pairs
                         || !Object.keys(data.crosswavelet_pairs).length) {
                     this.showError('The network is drawn from cross-wavelet output, '

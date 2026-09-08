@@ -27,6 +27,9 @@
                     return;
                 }
 
+                const stale = window.DIMS.payloadProblem(crqaData, 'cross-RQA output');
+                if (stale) { this.showError(stale); return; }
+
                 if (!crqaData.crqa_data || Object.keys(crqaData.crqa_data).length === 0) {
                     this.showError('Cross-RQA data is empty or invalid format.');
                     console.error('Invalid cross-RQA data structure:', crqaData);
