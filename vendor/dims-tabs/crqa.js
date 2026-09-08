@@ -23,7 +23,9 @@
                 const crqaData = await this.loadJSON(dataPath);
 
                 if (!crqaData) {
-                    this.showError('Cross-RQA data not found. Run the Python step_cRQA.py script first.');
+                    this.showError("No cross-RQA output for this recording. `include_cRQA` is set in "
+                        + "config.json, so the analysis was expected: run "
+                        + "`python build_assets.py` in the study folder to produce it.");
                     return;
                 }
 

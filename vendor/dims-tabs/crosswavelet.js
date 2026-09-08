@@ -23,7 +23,9 @@
                 const cwData = await this.loadJSON(dataPath);
                 
                 if (!cwData) {
-                    this.showError('Cross-wavelet data not found. Run the Python cross-wavelet script first.');
+                    this.showError("No cross-wavelet output for this recording. `include_crosswavelet` is "
+                        + "set in config.json, so the analysis was expected: run "
+                        + "`python build_assets.py` in the study folder to produce it.");
                     return;
                 }
                 

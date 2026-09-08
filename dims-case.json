@@ -12,7 +12,7 @@
   ],
   "vendorHashes": {
     "vendor/dims-core": "84b28a06f5da865f4d2a167238fb746916ec1c6d2ec959974a8548a41a63eecb",
-    "vendor/dims-tabs": "e0c1ec9c46da247510def999a32ecd964a30eb314d646284bef2696683775dd5"
+    "vendor/dims-tabs": "d29ae2a180f9a1d850459213f455c5471a16ce14116d610681487a4b095937f2"
   },
   "seededHashes": {
     "build_assets.py": "fc747a3a1b97b2f37fc9e42cbcba6017a57fc416ba2a591061935c6b163cf6b2",

@@ -25,7 +25,9 @@
                 const rqaData = await this.loadJSON(dataPath);
                 
                 if (!rqaData) {
-                    this.showError('RQA data not found. Run the Python RQA script first.');
+                    this.showError("No RQA output for this recording. `include_RQA` is set in config.json, "
+                        + "so the analysis was expected: run `python build_assets.py` "
+                        + "in the study folder to produce it.");
                     return;
                 }
                 
