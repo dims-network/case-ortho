@@ -53,6 +53,30 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: python /tmp/core/tools/dims-case check .
 
+      # The analyses are not vendored -- a study installs them from the core it
+      # pins -- so the numbers in this study's assets are produced by the code
+      # in /tmp/core, and this is the last point before that code becomes this
+      # study's. `examples/reference/` is a synthetic study whose answers are
+      # known in advance (a 2 s sine recurs at 2 s, a 0.4 s lag sits 0.4 s off
+      # the diagonal, two independent noises beat a 95 % level 5 % of the time),
+      # and its tests check those against pyrqa and against Torrence & Compo's
+      # published constants.
+      #
+      # Running it here rather than trusting the core's own CI is deliberate:
+      # the same release meets a different Python, a different numpy and a
+      # different OpenCL here, and it is this study that carries the result.
+      - name: The pinned core still answers the reference study correctly
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq pocl-opencl-icd
+          python -m pip install -q -e /tmp/core/packages/dims-analysis
+          python -m pip install -q pytest pyrqa
+          python -c "import pyrqa.computation" || {
+            echo "::error::pyrqa is the independent oracle for DET, LAM and RR;"                 "without it those tests skip silently and this gate proves nothing"
+            exit 1
+          }
+          python -m pytest /tmp/core/examples/reference/tests -q
+
       # Needs "Allow GitHub Actions to create and approve pull requests" in the
       # organisation's Actions settings. Until that is on, this step fails and
       # the job below explains why rather than leaving a bare red X every week.

@@ -111,6 +111,35 @@
             }, 100);
         },
 
+        // What the Monte Carlo coherence null cost, and what it says -- or, when
+        // it was not run, that it was not run and how to get it.
+        //
+        // This is the visible half of a rule the analysis already follows: the
+        // null is computed when something in the study reads it, and skipped
+        // otherwise. Skipping it is the right default -- it is hours of compute
+        // for ORTHO -- but a tab that quietly draws nothing turns a deliberate
+        // choice into a missing feature, and that is how a study ends up paying
+        // for a number nobody ever sees.
+        chanceLevelNote(pairData) {
+            const stats = pairData.statistics || {};
+            const provenance = (this.crossWaveletData || {}).provenance || {};
+            const fraction = stats.wtc_signif_fraction;
+
+            if (fraction === null || fraction === undefined) {
+                return 'Coherence chance level: not computed for this output. '
+                     + 'Set analysis.crosswavelet.mcCount in config.json and rebuild.';
+            }
+            const surrogates = provenance.mc_count;
+            const median = stats.wtc_signif_level_median;
+            const level = (typeof median === 'number')
+                ? `, median level ${median.toFixed(3)}` : '';
+            const count = (typeof surrogates === 'number')
+                ? `${surrogates} surrogates` : 'a Monte Carlo null';
+            return `Coherence above chance (outside the cone): `
+                 + `${(fraction * 100).toFixed(1)}% of cells `
+                 + `(${count}${level})`;
+        },
+
         createCrossWaveletPlot(containerId, pairKey, pairData) {
             // Check if Plotly is loaded
             if (!window.Plotly) {
@@ -135,6 +164,24 @@
             if (!vis.time || !vis.power || !vis.period) {
                 throw new Error('Missing required visualization fields (need power for cross-wavelet)');
             }
+
+            // The three large grids travel base64-encoded; decode once here and
+            // use these below rather than vis.* directly.
+            const power = window.DIMS.decodeArray(vis.power);
+            const phase = window.DIMS.decodeArray(vis.phase);
+            const coherence = vis.coherence ? window.DIMS.decodeArray(vis.coherence) : null;
+
+            // How far each cell's joint power exceeds its own 95 % level. The
+            // payload stores the level per scale and the power per cell; the
+            // ratio used to be stored as a third full grid, which held nothing
+            // these two do not. A cell is significant where this exceeds 1.
+            const level = vis.signif_xwt || [];
+            const sig95 = power.map((row, i) => {
+                const l = level[i];
+                return (l === null || l === undefined || !(l > 0))
+                    ? row.map(() => null)
+                    : row.map(v => (v === null || v === undefined ? null : v / l));
+            });
             
             console.log(`Creating cross-wavelet plot for ${pairKey}`);
             
@@ -241,7 +288,7 @@
             traces.push({
                 x: vis.time,
                 y: log2Period,
-                z: vis.power,
+                z: power,
                 type: 'heatmap',
                 colorscale: 'Viridis',
                 colorbar: {
@@ -260,11 +307,11 @@
             });
             
             // Add significance contour (95% confidence level)
-            if (vis.sig95_xwt && vis.sig95_xwt.length > 0) {
+            if (sig95.length > 0) {
                 traces.push({
                     x: vis.time,
                     y: log2Period,
-                    z: vis.sig95_xwt,
+                    z: sig95,
                     type: 'contour',
                     contours: {
                         start: 0.95,
@@ -312,25 +359,25 @@
             };
 
             // Only show arrows within the 95% confidence ridges
-            for (let i = 0; i < vis.phase.length; i += arrowSkipFreq) {
-                for (let j = 0; j < vis.phase[i].length; j += arrowSkipTime) {
+            for (let i = 0; i < phase.length; i += arrowSkipFreq) {
+                for (let j = 0; j < phase[i].length; j += arrowSkipTime) {
                     // Check if this point is within 95% significance ridge
-                    const isSignificant = vis.sig95_xwt && vis.sig95_xwt[i] && vis.sig95_xwt[i][j] > 1.0;
+                    const isSignificant = sig95[i] && sig95[i][j] > 1.0;
                     
                     if (isSignificant) { // Only show arrows within 95% confidence ridges
-                        const coherence = vis.coherence ? vis.coherence[i][j] : 0;
-                        const phase = vis.phase[i][j];
+                        const coherenceAt = coherence ? coherence[i][j] : 0;
+                        const phaseAt = phase[i][j];
 
                         // A cell can be null: where neither signal has power in
                         // this band there is no phase relationship to draw. Skip
                         // it rather than computing an arrow from NaN.
-                        if (phase === null || phase === undefined || Number.isNaN(phase)) continue;
-                        if (coherence === null || coherence === undefined) continue;
+                        if (phaseAt === null || phaseAt === undefined || Number.isNaN(phaseAt)) continue;
+                        if (coherenceAt === null || coherenceAt === undefined) continue;
                         
                         // Convert phase to arrow symbol
                         // Phase is in radians: 0 = in phase, π/2 = signal1 leads, π = anti-phase, -π/2 = signal2 leads
                         let arrow;
-                        const phaseDeg = (phase * 180 / Math.PI + 360) % 360;
+                        const phaseDeg = (phaseAt * 180 / Math.PI + 360) % 360;
                         
                         // Map phase to arrow direction (8 directions)
                         if (phaseDeg >= 337.5 || phaseDeg < 22.5) {
@@ -370,7 +417,7 @@
                             `Time: ${vis.time[j].toFixed(1)}s | ` +
                             `Period: ${vis.period[i].toFixed(2)}s<br>` +
                             `Phase: ${phaseDeg.toFixed(0)}°<br>` +
-                            `Power: ${vis.power[i][j].toFixed(4)}<br>`
+                            `Power: ${power[i][j].toFixed(4)}<br>`
                         );
                     }
                 }
@@ -437,7 +484,28 @@ if (arrowData.x.length > 0) {
                     showlegend: false
                 });
             }
-            
+
+            // The 95% level for that spectrum, beside it. It is computed for
+            // every study and, until this drew it, read by nothing -- which is
+            // how it went three releases applying a single-spectrum chi-square
+            // to a cross-wavelet quantity without anyone noticing. A number
+            // nobody looks at is a number nobody checks.
+            if (stats.global_signif && stats.global_signif.length > 0) {
+                traces.push({
+                    x: stats.global_signif,
+                    y: log2Period,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: window.DIMS.theme().trace, width: 1, dash: 'dash' },
+                    name: '95% level',
+                    xaxis: 'x2',
+                    yaxis: 'y2',
+                    hovertemplate: '95% level: %{x:.4f}<br>Period: %{customdata:.2f}s<extra></extra> ',
+                    customdata: vis.period,
+                    showlegend: false
+                });
+            }
+
             // ========== PANEL D: Scale-averaged cross-wavelet power (bottom) ==========
             if (vis.scale_avg_power && vis.scale_avg_power.length > 0) {
                 traces.push({
@@ -452,6 +520,23 @@ if (arrowData.x.length > 0) {
                     hovertemplate: 'Time: %{x:.1f}s<br>Power: %{y:.4f}<extra></extra>',
                     showlegend: false
                 });
+
+                // Its own 95% level: one number, so a flat line.
+                if (typeof stats.scale_avg_signif === 'number'
+                        && stats.scale_avg_signif > 0) {
+                    traces.push({
+                        x: [vis.time[0], vis.time[vis.time.length - 1]],
+                        y: [stats.scale_avg_signif, stats.scale_avg_signif],
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: window.DIMS.theme().trace, width: 1, dash: 'dash' },
+                        name: '95% level',
+                        xaxis: 'x3',
+                        yaxis: 'y3',
+                        hovertemplate: '95% level: %{y:.4f}<extra></extra>',
+                        showlegend: false
+                    });
+                }
             }
             
             // Create period tick labels (powers of 2)
@@ -473,6 +558,7 @@ if (arrowData.x.length > 0) {
                 text: `Cross-Wavelet: ${dataType1} ↔ ${dataType2}<br>` +
                     `<sub>Mean Coherence: ${stats.mean_coherence.toFixed(3)}, Max: ${stats.max_coherence.toFixed(3)}, ` +
                     `AR1: α₁=${pairData.alpha1.toFixed(3)}, α₂=${pairData.alpha2.toFixed(3)}</sub><br>` +
+                    `<sub>${this.chanceLevelNote(pairData)}</sub><br>` +
                     `<sub style="font-size: 9px;">Phase arrows (in 95% ridges): ` +
                     `→ in-phase (0°) | ↗ ${dataType1} leads 45° | ↑ ${dataType1} leads 90° | ↖ ${dataType1} leads 135° | ` +
                     `← anti-phase (180°) | ↙ ${dataType2} leads 135° | ↓ ${dataType2} leads 90° | ↘ ${dataType2} leads 45°</sub>`,

@@ -28,7 +28,9 @@ import numpy as np
 # dims-network/dims, docs/contracts/step.md. `assets` is what makes this run on
 # a study whose data lives outside the repository; `results` is what stops it
 # erasing the continuous RQA that writes into the same file.
+from dims_analysis.common import arrays as _arrays
 from dims_analysis.common import assets as _assets
+from dims_analysis.common import payload as _payload
 from dims_analysis.common import reduce as _reduce
 from dims_analysis.common import results as _results
 from dims_analysis.common import series as _series
@@ -85,8 +87,6 @@ def process(video_id, data_type, legend):
     c_ds = _reduce.block_mode(codes, factor)
     rr = _reduce.rate_of(R) if factor > 1 else rr_full
 
-    rows, colsi = np.where(R == 1)
-    sparse = [[int(r), int(c)] for r, c in zip(rows, colsi)]
     print(f"  {video_id} {data_type}: {len(codes)}->{len(c_ds)} pts, "
           f"{len(distinct)} AOIs, RR={rr_full*100:.1f}%")
     return {
@@ -100,7 +100,12 @@ def process(video_id, data_type, legend):
             "data": [int(x) for x in c_ds],
             "labels": [legend.get(int(x), str(int(x))) for x in c_ds],
             "matrix_size": len(t_ds),
-            "sparse_matrix": sparse,
+            # One bit per cell, the same encoding the shared RQA step writes
+            # since core 2.0.0. Gaze recurrence runs 63-89 % dense here, where
+            # the index pairs this replaced cost about ten bytes per recurrent
+            # cell: one matrix was 7,300,452 bytes as pairs and 133,803 as a
+            # bitmap.
+            "matrix": _arrays.pack_bitmap(R),
             # Inside `visualization`, beside the picture it describes -- the
             # same place the shared RQA step writes it and the place the
             # assets contract tells a tab to look. It was one level up, which
@@ -114,8 +119,14 @@ def process(video_id, data_type, legend):
                 "rate_drawn": float(rr),
             },
         },
+        # The analysis at full resolution, in the same file as the picture,
+        # as the analysis-output contract requires. Codes rather than a
+        # continuous signal, so the matrix is rebuilt by equality rather than
+        # by distance.
         "full_data": {"n_points": int(len(codes)),
-                      "time_range": [float(time[0]), float(time[-1])]},
+                      "time_range": [float(time[0]), float(time[-1])],
+                      "time": _arrays.pack_f32(time),
+                      "codes": [int(x) for x in codes]},
     }
 
 
@@ -146,8 +157,16 @@ def main():
             # One merge implementation, shared with the continuous RQA step
             # that writes into this same file. Two copies of a merge is how one
             # of them ends up clobbering the other.
-            report = _results.write_payload(
-                out, {"video_id": video_id, "rqa_data": results}, compact=False)
+            # Rounded like every other payload. This step called
+            # `round_payload` zero times while its own `precision` block
+            # claimed six significant figures -- a file whose stated precision
+            # was not its actual precision.
+            report = _results.write_payload(out, _payload.round_payload({
+                "video_id": video_id,
+                "payload_version": _arrays.PAYLOAD_VERSION,
+                "rqa_data": results,
+                "precision": _payload.precision_note(),
+            }), compact=False)
             n += 1
             # Say both halves out loud: what was already in the file and
             # survived, and what this run overwrote. A silent replacement is

@@ -106,7 +106,7 @@
                 throw new Error('Plotly library not loaded.');
             }
             const vis = pairData.visualization;
-            if (!vis || !vis.time || !vis.matrix_size || !vis.sparse_matrix
+            if (!vis || !vis.time || !vis.matrix_size || !vis.matrix
                 || !vis.data_x || !vis.data_y) {
                 throw new Error('Missing required cRQA visualization fields');
             }
@@ -115,14 +115,10 @@
             // Common (uniform) time axis shared by both series.
             const time = vis.time;
 
-            // Build a dense matrix from the (complete) sparse recurrence plot.
+            // The complete recurrence plot, one bit per cell. Decoded once
+            // rather than rebuilt from index pairs by hand.
             const size = vis.matrix_size;
-            const matrix = new Array(size).fill(null).map(() => new Array(size).fill(0));
-            vis.sparse_matrix.forEach(([row, col]) => {
-                if (row < size && col < size) {
-                    matrix[row][col] = 1;
-                }
-            });
+            const matrix = window.DIMS.decodeArray(vis.matrix);
 
             // One color per series, matched to the main timeseries colors where possible
             // (same HSL scheme as plotTimeseries / createRQAPlot), with sane fallbacks.

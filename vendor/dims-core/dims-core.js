@@ -44,6 +44,91 @@ let THEME = readTheme();
 window.DIMS = window.DIMS || {
     _tabs: [],
 
+    // The payload encoding this build understands. See
+    // docs/contracts/analysis-output.md and common/arrays.py.
+    PAYLOAD_VERSION: 2,
+
+    // Large arrays travel base64-encoded, so a study ships one file format
+    // rather than a JSON for the browser and an .npz beside it that mostly
+    // duplicated it. Two encodings, each naming itself:
+    //
+    //   {encoding: 'bitmap-b64', rows, cols, data}   a recurrence matrix
+    //   {encoding: 'f32-b64',    shape, data}        a coherence/power grid
+    //
+    // Anything else passes through untouched, so a tab can call this on a
+    // field without knowing whether it grew large enough to be encoded. An
+    // encoding this build does not know throws with its name in the message --
+    // silence here is how a panel ends up empty with nothing in the log.
+    decodeArray(field) {
+        if (!field || typeof field !== 'object' || Array.isArray(field)) return field;
+        const enc = field.encoding;
+        if (enc === undefined) return field;
+        if (enc === 'bitmap-b64') return DIMS._decodeBitmap(field);
+        if (enc === 'f32-b64') return DIMS._decodeFloat32(field);
+        throw new Error(
+            `unknown payload encoding '${enc}'. This dashboard reads version ` +
+            `${DIMS.PAYLOAD_VERSION}; the asset was written by a newer core. ` +
+            `Update the vendored core, or rebuild the assets with the one pinned here.`);
+    },
+
+    _bytes(b64) {
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+    },
+
+    // One bit per cell, most-significant-first, each row starting on a byte
+    // boundary. Returned dense because that is what Plotly wants -- rqa.js and
+    // crqa.js each used to rebuild exactly this from index pairs by hand.
+    _decodeBitmap(field) {
+        const { rows, cols } = field;
+        const bytes = DIMS._bytes(field.data);
+        const stride = (cols + 7) >> 3;
+        if (bytes.length !== rows * stride) {
+            throw new Error(
+                `a ${rows}x${cols} bitmap needs ${rows * stride} bytes, got ${bytes.length}`);
+        }
+        const out = new Array(rows);
+        for (let r = 0; r < rows; r++) {
+            const row = new Array(cols);
+            const base = r * stride;
+            for (let c = 0; c < cols; c++) {
+                row[c] = (bytes[base + (c >> 3)] >> (7 - (c & 7))) & 1;
+            }
+            out[r] = row;
+        }
+        return out;
+    },
+
+    // Little-endian float32, stated rather than inherited: DataView defaults
+    // to big-endian and numpy follows the platform. NaN becomes null, which is
+    // what Plotly reads as a gap -- and what these grids mean by it: outside
+    // the cone of influence, or a band where neither signal has power.
+    _decodeFloat32(field) {
+        const shape = field.shape || [];
+        const bytes = DIMS._bytes(field.data);
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const total = shape.reduce((a, b) => a * b, 1);
+        if (bytes.length !== total * 4) {
+            throw new Error(
+                `shape [${shape}] needs ${total * 4} bytes, got ${bytes.length}`);
+        }
+        const flat = new Array(total);
+        for (let i = 0; i < total; i++) {
+            const v = view.getFloat32(i * 4, true);
+            flat[i] = Number.isNaN(v) ? null : v;
+        }
+        if (shape.length <= 1) return flat;
+        if (shape.length !== 2) {
+            throw new Error(`a ${shape.length}-dimensional grid is not something a tab draws`);
+        }
+        const [rows, cols] = shape;
+        const out = new Array(rows);
+        for (let r = 0; r < rows; r++) out[r] = flat.slice(r * cols, (r + 1) * cols);
+        return out;
+    },
+
     registerTab(def) {
         if (!def || !def.id) {
             console.error('DIMS.registerTab: a tab needs an id', def);

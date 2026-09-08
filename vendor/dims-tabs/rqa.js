@@ -113,7 +113,7 @@
 
         createRQAPlot(containerId, dataType, plotData) {
             const vis = plotData && plotData.visualization;
-            if (!vis || !vis.time || !vis.data || !vis.matrix_size || !vis.sparse_matrix) {
+            if (!vis || !vis.time || !vis.data || !vis.matrix_size || !vis.matrix) {
                 throw new Error('Missing required visualization fields');
             }
 
@@ -129,11 +129,9 @@
             const time = pairs.map(p => p.t);
             const data = pairs.map(p => p.d);
 
-            // Dense matrix from the sparse recurrence points.
-            const matrix = new Array(vis.matrix_size).fill(null).map(() => new Array(vis.matrix_size).fill(0));
-            vis.sparse_matrix.forEach(([row, col]) => {
-                if (row < vis.matrix_size && col < vis.matrix_size) matrix[row][col] = 1;
-            });
+            // One decode instead of rebuilding a dense matrix from index pairs
+            // by hand -- Plotly wants dense, and the payload now ships dense.
+            const matrix = window.DIMS.decodeArray(vis.matrix);
 
             this._renderRecurrenceFigure(containerId, {
                 titleText: `${dataType}<br><sub>Recurrence Rate: ${(plotData.recurrence_rate * 100).toFixed(2)}%, Threshold: ${plotData.threshold.toFixed(4)}</sub>`,
