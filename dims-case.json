@@ -1,7 +1,7 @@
 {
   "case": "ortho",
   "visibility": "public",
-  "dimsCore": "2.0.0",
+  "dimsCore": "2.0.1",
   "publishable": [],
   "restricted": [
     "assets/videos",
