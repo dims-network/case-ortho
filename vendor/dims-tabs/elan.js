@@ -7,6 +7,23 @@
 (function () {
     'use strict';
 
+    /** [0, last sample] across every loaded series, or undefined if none.
+     *
+     * Undefined leaves Plotly to autoscale, which is the right fallback: a tab
+     * with nothing loaded should not claim an extent it cannot know.
+     */
+    function recordingExtent(datasets) {
+        if (!Array.isArray(datasets) || datasets.length === 0) return undefined;
+        let max = -Infinity;
+        datasets.forEach(d => {
+            (d && d.data ? d.data : []).forEach(row => {
+                const t = row && row.Time;
+                if (typeof t === 'number' && Number.isFinite(t) && t > max) max = t;
+            });
+        });
+        return max > -Infinity ? [0, max] : undefined;
+    }
+
     // Colours come from the host's palette through the documented
     // accessor, read at draw time so a theme switch is picked up. Tabs
     // must not reach into the host's script scope: a tab file is a
@@ -49,7 +66,7 @@
 
                 this.elanData = { tiers };
                 this.displayELANTab();
-                this.showStatus('ELAN annotations loaded.');
+                this.showTabStatus();
             } catch (e) {
                 console.error('Error loading ELAN data:', e);
                 this.showError(`Failed to load ELAN data: ${e.message}`);
@@ -190,9 +207,15 @@
                 margin: { t: 20, r: 20, b: 50, l: leftMargin },
                 xaxis: {
                     title: 'Time (s)', color: window.DIMS.theme().font, gridcolor: window.DIMS.theme().grid, zeroline: false,
-                    range: this.mergedData
-                        ? [0, Math.max(...this.mergedData.map(d => d.Time))]
-                        : undefined
+                    // The recording's extent, not the annotations'. This asked
+                    // the host for `mergedData`, which the host has never set --
+                    // so the request always failed and Plotly autoscaled to the
+                    // annotated span. Lanes then did not line up with any other
+                    // tab, and an unannotated head or tail of the recording was
+                    // simply absent. `currentData` is what the host actually
+                    // holds, and is the same source the time slider's bounds
+                    // come from.
+                    range: recordingExtent(this.currentData)
                 },
                 yaxis: {
                     tickvals: tiers.map((_, i) => i + 0.5),
@@ -222,6 +245,7 @@
     window.DIMS.registerTab({
         id: 'elan',
         label: 'ELAN Annotations',
+        status: 'Click an annotation to jump to it.',
         order: 50,
         gate: cfg => !!cfg.include_elan,
         async onActivate(app, container) {

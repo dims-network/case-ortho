@@ -153,6 +153,10 @@ select {
     text-align: center;
     margin-bottom: 20px;
     color: var(--muted);
+    /* Reserved, so a tab with nothing to say does not shorten the page and
+       shift every figure under it up a line on the way in and back down on
+       the way out. */
+    min-height: 1.2em;
 }
 
 .status.error {

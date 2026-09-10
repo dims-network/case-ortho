@@ -181,8 +181,10 @@ window.DIMS = window.DIMS || {
         Object.assign(this._appProto, methods);
     },
 
-    // Tabs must style themselves with CSS custom properties. This is exposed
-    // only for the plot libraries, which need concrete colour values.
+    // Tabs style the DOM with CSS custom properties, which follow a theme
+    // switch. This is exposed for the plot libraries, which need a concrete
+    // colour value rather than a CSS reference; it is read at call time, so a
+    // layout rebuilt on re-render gets the current theme.
     theme() { return THEME; }
 };
 
@@ -194,10 +196,7 @@ class DIMSApp {
         this.currentVideoID = null;
         this.lastClickedPoint = null;
         this.timeSlider = null;
-        this.rqaData = null;
-        this.crossWaveletData = null;
-        this.crqaData = null;
-        this.elanData = null;
+        this._resetTabCaches();
         this.elanSelectedTiers = null;
         this.currentTab = null;
         this.currentPerspective = '';
@@ -325,6 +324,12 @@ class DIMSApp {
             }
         }
         this.currentTab = tabName;
+
+        // One status line is shared by every tab, and a tab is activated once.
+        // Without this the line kept whatever the tab you just left had written
+        // -- so the reader was told to click plots that are no longer on screen,
+        // and a tab whose own message never fired sat on someone else's.
+        this.showTabStatus();
 
         document.querySelectorAll('.tab-button').forEach(b => {
             b.classList.toggle('active', b.dataset.tab === tabName);
@@ -613,9 +618,7 @@ class DIMSApp {
         select.addEventListener('change', (e) => {
             this.currentPerspective = e.target.value || '';
             const t = this.lastClickedPoint ?? 0;
-            const win = parseInt(document.getElementById('windowSize').value)
-                || this.config.defaultWindowSize || 5;
-            this.updateVideos(t, win);
+            this.updateVideos(t, this.windowSize());
         });
     }
 
@@ -669,33 +672,57 @@ class DIMSApp {
 
     // Redraw everything with the active theme. Clears per-tab caches so each
     // tab is freshly drawn (reading the new THEME) when shown.
-    rerenderAll() {
-        const vid = this.currentVideoID;
-        if (!vid) return;
-        const tab = this.currentTab;
+    /* Every built-in tab's cached payload, dropped together.
+
+       This list was written out in three places -- the constructor,
+       rerenderAll and the video switch -- so the fourth tab would have needed
+       a fourth copy.
+
+       elanSelectedTiers is deliberately NOT in it. It is a choice the viewer
+       made, not data fetched from a payload, and the difference shows up in
+       rerenderAll: re-rendering for a theme change must not throw away which
+       tiers someone asked to see. Switching video does clear it, because the
+       tiers belong to the recording. That asymmetry was already the behaviour;
+       it just was not written down anywhere, which is why unifying the three
+       copies naively turns it into a regression. */
+    _resetTabCaches() {
         this.rqaData = null;
         this.crossWaveletData = null;
         this.crqaData = null;
         this.elanData = null;
+    }
+
+    rerenderAll() {
+        const vid = this.currentVideoID;
+        if (!vid) return;
+        const tab = this.currentTab;
+        this._resetTabCaches();
         Promise.resolve(this.loadVideoData(vid)).then(() => this.switchTab(tab));
     }
 
-    async loadJSON(url) {
+    /** Fetch and parse JSON, or null.
+     *
+     * `optional: true` says the file's absence is a legitimate state of the
+     * study rather than a fault. A study with no transcripts logged a console
+     * error per recording change for a file its config never claimed, so a
+     * clean study looked broken to anyone who opened devtools -- while the
+     * panel beside it said "No transcript available" and carried on. A
+     * malformed file is still reported: not having one and having a broken one
+     * are different, and only the second is worth a reader's attention.
+     */
+    async loadJSON(url, { optional = false } = {}) {
         try {
-            console.log(`Attempting to load JSON from: ${url}`);
             const response = await fetch(url);
-            console.log(`Fetch response for ${url}:`, response.status, response.statusText);
             
             if (!response.ok) {
+                if (optional && response.status === 404) return null;
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const text = await response.text();
-            console.log(`Raw response length for ${url}:`, text.length);
             
             try {
                 const data = JSON.parse(text);
-                console.log(`Successfully parsed JSON from: ${url}`, data);
                 return data;
             } catch (parseError) {
                 console.error(`JSON parse error for ${url}:`, parseError);
@@ -758,7 +785,6 @@ class DIMSApp {
         
         if (wrapDetected) {
             // Return only the first segment before the wrap
-            console.log(`Removing wrapped data after index ${wrapIndex}`);
             return sortedData.slice(0, wrapIndex);
         }
         
@@ -775,7 +801,10 @@ class DIMSApp {
         
         const [timeseriesResults, transcript] = await Promise.all([
             Promise.all(timeseriesPromises),
-            this.loadJSON(`assets/transcripts/${videoID}_transcript.json`)
+            // Optional: plenty of studies have no transcripts at all, and a
+            // study with no video usually has none either.
+            this.loadJSON(`assets/transcripts/${videoID}_transcript.json`,
+                          { optional: true })
         ]);
         
         // Keep datasets separate instead of merging
@@ -785,13 +814,6 @@ class DIMSApp {
                 const rawData = timeseriesResults[index].data;
                 const cleanedData = this.cleanTimeseriesData(rawData);
                 
-                console.log(`Dataset ${dataType}:`, {
-                    rawRows: rawData.length,
-                    cleanedRows: cleanedData.length,
-                    columns: Object.keys(cleanedData[0] || {}),
-                    timeRange: cleanedData.length > 0 ? [cleanedData[0].Time, cleanedData[cleanedData.length - 1].Time] : []
-                });
-                
                 datasets.push({
                     name: dataType,
                     data: cleanedData
@@ -799,7 +821,6 @@ class DIMSApp {
             }
         });
         
-        console.log('Loaded datasets:', datasets);
         
         return {
             timeseries: datasets,
@@ -861,9 +882,21 @@ class DIMSApp {
         return slider;
     }
 
+    /** The window width the page is showing, in seconds.
+     *
+     * `defaultWindowSize` is optional in the schema, so a config without one
+     * used to reach updateVideos as `undefined` -- and `t - undefined / 2` is
+     * NaN, which is how a fresh load could label its segment
+     * "Segment (NaN s - NaN s)" before anything had been clicked.
+     */
+    windowSize() {
+        const el = document.getElementById('windowSize');
+        return parseInt(el && el.value) || this.config.defaultWindowSize || 5;
+    }
+
     handleTimeClick(time) {
         this.lastClickedPoint = time;
-        const windowSize = parseInt(document.getElementById('windowSize').value) || 5;
+        const windowSize = this.windowSize();
         
         // Update plot with highlight
         this.plotTimeseries(this.currentData, time);
@@ -948,7 +981,7 @@ class DIMSApp {
                 );
             } catch (e) {
                 fullVideoContainer.innerHTML = `
-                    <h3 style="color:white;">Full Video</h3>
+                    <h3>Full Video</h3>
                     <video src="${videoSrc}" controls style="width:100%;" preload="metadata"></video>
                 `;
             }
@@ -994,16 +1027,22 @@ class DIMSApp {
         
         this.showStatus('Loading data...');
         
+        // Which recording we were on before this call. A theme change re-enters
+        // here with the SAME id (rerenderAll passes currentVideoID), and the
+        // tier selection has to survive that -- see the note on
+        // _resetTabCaches, which spares it for exactly this reason and was
+        // being undone two lines later.
+        const sameRecording = this.currentVideoID === videoID;
+
         try {
             const data = await this.loadDataForVideoID(videoID);
             this.currentData = data.timeseries;
             this.currentTranscript = data.transcript;
             this.currentVideoID = videoID;
-            this.rqaData = null;
-            this.crossWaveletData = null;
-            this.crqaData = null;
-            this.elanData = null;
-            this.elanSelectedTiers = null;
+            this._resetTabCaches();
+            // The tiers belong to the recording, so a NEW one starts over. A
+            // re-render of the one already open is not a new one.
+            if (!sameRecording) this.elanSelectedTiers = null;
             
             if (this.currentData && this.currentData.length > 0) {
                 // Create time slider - find min/max across all datasets
@@ -1025,10 +1064,10 @@ class DIMSApp {
                     this.plotTimeseries(this.currentData);
                     
                     // Initialize videos with full video
-                    this.updateVideos(minTime, this.config.defaultWindowSize);
+                    this.updateVideos(minTime, this.windowSize());
                     
                     // Initialize transcript
-                    this.updateTranscript(minTime, this.config.defaultWindowSize);
+                    this.updateTranscript(minTime, this.windowSize());
                     
                     this.showStatus(`Loaded data for ${videoID}. Click on any point to segment video.`);
                     
@@ -1053,8 +1092,16 @@ class DIMSApp {
         }
     }
 
+    // The visible tab's own steady line, or nothing when it has none. Tabs
+    // call this when their loading finishes, so the settled text lives in one
+    // place -- the registration -- rather than being repeated at each site that
+    // has to restore it.
+    showTabStatus() {
+        const tab = (this.tabs || []).find(t => t.id === this.currentTab);
+        this.showStatus((tab && tab.status) || '');
+    }
+
     showStatus(message) {
-        console.log('Status:', message);
         const statusEl = document.getElementById('status');
         if (statusEl) {
             statusEl.textContent = message;
@@ -1088,16 +1135,6 @@ window.DIMS._appProto = DIMSApp.prototype;
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing DIMS app...');
-    
-    // Check dependencies
-    console.log('=== DEPENDENCY CHECK ===');
-    console.log('React loaded:', !!window.React);
-    console.log('ReactDOM loaded:', !!window.ReactDOM);
-    console.log('Plotly loaded:', !!window.Plotly);
-    console.log('Papa (PapaParse) loaded:', !!window.Papa);
-    console.log('TimeRangeVideo component loaded:', !!window.TimeRangeVideo);
-    
     // Check if required elements exist
     const requiredElements = ['status', 'videoSelect', 'windowSize', 'plotContainer', 'fullVideoContainer', 'segmentVideoContainer'];
     const missingElements = requiredElements.filter(id => !document.getElementById(id));

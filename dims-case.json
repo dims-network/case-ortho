@@ -1,7 +1,7 @@
 {
   "case": "ortho",
   "visibility": "public",
-  "dimsCore": "1.0.1",
+  "dimsCore": "1.4.3",
   "publishable": [],
   "restricted": [
     "assets/videos",
@@ -11,8 +11,8 @@
     "assets/motion_tracking"
   ],
   "vendorHashes": {
-    "vendor/dims-core": "8c523017fea3ac08fb38038867c5c1760f3c1b996bc0f9e5100ac688496ccc74",
-    "vendor/dims-tabs": "109b1baa84cc2b793421f3fcfe3a2cbd4cef842addb3eb5cd2b2d9791a282f55"
+    "vendor/dims-core": "f143933ada8ab63eef75f87768f7f43a6a6eb12e3a214e51b1971c658e425de9",
+    "vendor/dims-tabs": "46c6ddcd13f436614a3fb33acb07be4bc8aaa3de58e74ef3dc3bed1d2e27f3d4"
   },
   "seededHashes": {
     "build_assets.py": "fc747a3a1b97b2f37fc9e42cbcba6017a57fc416ba2a591061935c6b163cf6b2",

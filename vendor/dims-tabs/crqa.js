@@ -18,7 +18,6 @@
 
             try {
                 const dataPath = `assets/crqa/${videoID}_crqa_data.json`;
-                console.log('Loading cross-RQA data from:', dataPath);
 
                 const crqaData = await this.loadJSON(dataPath);
 
@@ -54,7 +53,7 @@
                 return;
             }
 
-            container.innerHTML = '<h2 style="color: white; margin-bottom: 20px;">Cross-Recurrence Quantification Analysis</h2>';
+            container.innerHTML = '<h2 style="margin-bottom: 20px;">Cross-Recurrence Quantification Analysis</h2>';
 
             const plotConfigs = [];
             Object.entries(this.crqaData.crqa_data).forEach(([pairKey, pairData], index) => {
@@ -63,17 +62,24 @@
                 block.style.marginBottom = '40px';
 
                 const heading = document.createElement('h3');
-                heading.style.color = 'white';
+                // The theme's own token, not a literal. `white` was invisible
+                // against the default light theme's white panel -- which is the
+                // failure the rule in docs/contracts/tab.md exists to prevent,
+                // and which the comment a few lines below already states for
+                // the pane background.
+                heading.style.color = 'var(--text)';
                 const names = pairData.series_names || pairKey.split('_vs_');
                 heading.innerHTML = `${names[0]} &harr; ${names[1]} ` +
-                    `<span style="color:#aaa;font-size:0.8em;">` +
+                    `<span style="color:var(--muted);font-size:0.8em;">` +
                     `(Global RR: ${(pairData.global_recurrence_rate * 100).toFixed(2)}%, ` +
                     `Threshold: ${pairData.threshold.toFixed(4)})</span>`;
                 block.appendChild(heading);
 
                 const rpDiv = document.createElement('div');
                 rpDiv.id = `crqa-plot-${index}`;
-                rpDiv.style.backgroundColor = window.DIMS.theme().paper;
+                // .plot-pane, not an inline background: an inline one is written
+                // once and keeps the colour of whichever theme was active then.
+                rpDiv.classList.add('plot-pane');
                 rpDiv.style.padding = '10px';
                 rpDiv.style.borderRadius = '5px';
                 block.appendChild(rpDiv);
@@ -92,7 +98,7 @@
                         if (el) el.innerHTML = `<div style="color: red; padding: 20px;">Error creating plot: ${error.message}</div>`;
                     }
                 });
-                this.showStatus('Cross-RQA plots loaded.');
+                this.showTabStatus();
             }, 100);
         },
 
@@ -121,9 +127,23 @@
             const time = vis.time;
 
             // The complete recurrence plot, one bit per cell. Decoded once
-            // rather than rebuilt from index pairs by hand.
-            const size = vis.matrix_size;
-            const matrix = window.DIMS.decodeArray(vis.matrix);
+            // rather than rebuilt from index pairs by hand, then transposed.
+            //
+            // The transpose is the whole orientation of this figure. The
+            // analysis builds the matrix as cdist(series 1, series 2), so its
+            // ROWS index series 1; Plotly places z[row][col] at (x[col],
+            // y[row]), which would put series 1 on the y-axis. The labels and
+            // both marginals here say the opposite -- x is series 1 -- and so
+            // do docs/analyses/crqa.md and the figures on the docs site.
+            //
+            // Drawn untransposed, the picture was the transpose of what it
+            // claimed to be, and an off-diagonal band therefore named the wrong
+            // measure as leading. Reading a lag off this tab gave the direction
+            // backwards. Transposing here rather than in the analysis keeps
+            // every committed payload valid: nothing written changes, and a
+            // study renders correctly without being rebuilt.
+            const decoded = window.DIMS.decodeArray(vis.matrix);
+            const matrix = decoded[0].map((_, col) => decoded.map(row => row[col]));
 
             // One color per series, matched to the main timeseries colors where possible
             // (same HSL scheme as plotTimeseries / createRQAPlot), with sane fallbacks.
@@ -154,6 +174,7 @@
     window.DIMS.registerTab({
         id: 'crqa',
         label: 'Cross-RQA',
+        status: 'Click on any plot to select a time point.',
         order: 40,
         gate: cfg => Array.isArray(cfg.include_cRQA) && cfg.include_cRQA.length > 0,
         async onActivate(app, container) {

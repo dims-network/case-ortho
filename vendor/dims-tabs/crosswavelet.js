@@ -1,4 +1,4 @@
-// Cross-Wavelet tab.
+// Cross-wavelet analysis tab.
 //
 // Cross-wavelet power and coherence for pairs of measures.
 //
@@ -18,7 +18,6 @@
             
             try {
                 const dataPath = `assets/crosswavelet/${videoID}_crosswavelet_data.json`;
-                console.log('Loading cross-wavelet data from:', dataPath);
                 
                 const cwData = await this.loadJSON(dataPath);
                 
@@ -29,7 +28,6 @@
                     return;
                 }
                 
-                console.log('Cross-wavelet data loaded:', cwData);
                 
                 // Validate data structure
                 const stale = window.DIMS.payloadProblem(cwData, 'cross-wavelet output');
@@ -62,9 +60,65 @@
                 return;
             }
             
-            console.log('Displaying cross-wavelet plots for:', this.crossWaveletData);
             
-            container.innerHTML = '<h2 style="color: white; margin-bottom: 20px;">Cross-Wavelet Coherence Analysis</h2>';
+            container.innerHTML = '';
+
+            // The figure carries three dashed lines and names none of them:
+            // they are drawn in the body text colour at width 1, beside solid
+            // curves in the same colour at width 2, with showlegend off. The
+            // (i) is the network tab's, so the two tabs explain themselves the
+            // same way.
+            const titleRow = document.createElement('div');
+            titleRow.style.cssText =
+                'display:flex;align-items:center;gap:10px;margin-bottom:8px;';
+            const heading = document.createElement('h2');
+            heading.style.margin = '0';
+            heading.textContent = 'Cross-wavelet analysis';
+            const info = document.createElement('button');
+            info.type = 'button';
+            info.id = 'cwInfoToggle';
+            info.textContent = 'i';
+            info.style.cssText =
+                'width:24px;height:24px;border-radius:50%;cursor:pointer;line-height:1;';
+            info.setAttribute('aria-label', 'What this figure shows');
+            titleRow.append(heading, info);
+            container.appendChild(titleRow);
+
+            const help = document.createElement('div');
+            help.id = 'cwHelp';
+            help.style.cssText =
+                'opacity:.8;margin:0 0 16px;max-width:70ch;font-size:13px;';
+            help.innerHTML =
+                'The heatmap is cross-wavelet power: how much joint energy the '
+                + 'two measures had at each period and moment. '
+                + '<b>The dashed line beside the spectrum on the right</b> is '
+                + 'that spectrum\u2019s 95&nbsp;% level — where the '
+                + 'time-averaged power at a period would have to reach to beat '
+                + 'red noise. <b>The flat dashed line across the bottom panel</b> '
+                + 'is the same level for the band-averaged power, which is one '
+                + 'number and so a straight line. Power above either line is '
+                + 'more joint energy than two unrelated red-noise signals would '
+                + 'give. <b>The shaded region with the dashed boundary</b> is the '
+                + 'cone of influence, where the transform runs off the ends of '
+                + 'the record and the values should not be read. '
+                + '<br><br><b>Phase arrows</b> sit where power is significant '
+                + 'rather than where coherence is, so they are not a test of '
+                + 'whether the timing was consistent. Each is the phase angle '
+                + 'binned to 45°: <b>→</b> in phase · <b>←</b> anti-phase · '
+                + '<b>↑</b> the first measure leads by 90° · <b>↓</b> the second '
+                + 'leads by 90°, with the diagonals the 45° and 135° cases in '
+                + 'between. Hovering one gives the exact time, period and angle.';
+            info.setAttribute('aria-controls', help.id);
+            const syncHelp = () => {
+                help.style.display = this._cwHelpOpen ? '' : 'none';
+                info.setAttribute('aria-expanded', this._cwHelpOpen ? 'true' : 'false');
+            };
+            info.addEventListener('click', () => {
+                this._cwHelpOpen = !this._cwHelpOpen;
+                syncHelp();
+            });
+            syncHelp();
+            container.appendChild(help);
             
             // Create grid for cross-wavelet plots
             const grid = document.createElement('div');
@@ -75,12 +129,13 @@
             // Create all plot containers first
             const plotConfigs = [];
             Object.entries(this.crossWaveletData.crosswavelet_pairs).forEach(([pairKey, pairData], index) => {
-                console.log(`Creating cross-wavelet plot container ${index} for ${pairKey}`);
                 
                 const plotDiv = document.createElement('div');
                 plotDiv.id = `cw-plot-${index}`;
                 plotDiv.style.height = '800px'; // Increased for 4-panel layout
-                plotDiv.style.backgroundColor = window.DIMS.theme().paper;
+                // .plot-pane, not an inline background: an inline one is written
+                // once and keeps the colour of whichever theme was active then.
+                plotDiv.classList.add('plot-pane');
                 plotDiv.style.padding = '10px';
                 plotDiv.style.borderRadius = '5px';
                 
@@ -101,7 +156,6 @@
             setTimeout(() => {
                 plotConfigs.forEach(config => {
                     try {
-                        console.log(`Creating cross-wavelet plot for ${config.pairKey} in ${config.containerId}`);
                         this.createCrossWaveletPlot(config.containerId, config.pairKey, config.pairData);
                     } catch (error) {
                         console.error(`Error creating cross-wavelet plot for ${config.pairKey}:`, error);
@@ -112,7 +166,7 @@
                     }
                 });
                 
-                this.showStatus('Cross-wavelet plots loaded. Click on any plot to select a time point.');
+                this.showTabStatus();
             }, 100);
         },
 
@@ -188,7 +242,6 @@
                     : row.map(v => (v === null || v === undefined ? null : v / l));
             });
             
-            console.log(`Creating cross-wavelet plot for ${pairKey}`);
             
             // Extract data type names
             const dataType1 = pairData.data_type1;
@@ -296,19 +349,30 @@
                 z: power,
                 type: 'heatmap',
                 colorscale: 'Viridis',
+                // Its own lane between the heatmap and the global spectrum.
+                // A default-thickness bar with its title on the right needed
+                // more room than the gap held, so it reached across into the
+                // spectrum beside it.
                 colorbar: {
                     title: 'Power',
-                    titleside: 'right',
-                    x: 0.72,
+                    titleside: 'top',
+                    thickness: 10,
+                    x: 0.665,
+                    xanchor: 'left',
                     y: 0.55,
                     yanchor: 'middle',
                     len: 0.34,
-                    lenmode: 'fraction'
+                    lenmode: 'fraction',
+                    tickfont: { size: 9 }
                 },
                 xaxis: 'x',
                 yaxis: 'y',
                 hovertemplate: 'Time: %{x:.1f}s<br>Period: %{customdata:.2f}s<br>Power: %{z:.4f}<extra></extra>',
-                customdata: vis.period
+                // One period per cell, not one per row. `z` is a grid, so a
+                // 1-D customdata cannot be indexed against it and Plotly gives
+                // up and prints the template itself into the tooltip. The
+                // stored grid is downsampled, so the copy is cheap.
+                customdata: power.map((row, i) => row.map(() => vis.period[i]))
             });
             
             // Add significance contour (95% confidence level)
@@ -345,15 +409,24 @@
                 text: [],
                 mode: 'markers+text',
                 type: 'scatter',
+                // A backing disc, not decoration: the glyphs are drawn only
+                // where power is high, which is the pale end of Viridis, and
+                // white-on-yellow is as unreadable as the theme-coloured text
+                // this replaces was on the dark end.
                 marker: {
-                    size: 0.1,
-                    color: 'rgba(0,0,0,0)'
+                    size: 15,
+                    color: 'rgba(0,0,0,0.45)'
                 },
                 text: [],
                 textfont: {
-                    family: 'Arial',
-                    size: 16,
-                    color: window.DIMS.theme().font
+                    // Arial has no U+2196-2199, so the diagonals fall back to
+                    // whatever the system offers and can arrive as tofu.
+                    family: 'Segoe UI Symbol, Apple Symbols, DejaVu Sans, sans-serif',
+                    size: 14,
+                    // Fixed white rather than the theme's text colour, which is
+                    // near-black in the light theme over a colourscale that is
+                    // dark at both themes' defaults.
+                    color: '#ffffff'
                 },
                 textposition: 'middle center',
                 xaxis: 'x',
@@ -563,26 +636,29 @@ if (arrowData.x.length > 0) {
                 text: `Cross-Wavelet: ${dataType1} ↔ ${dataType2}<br>` +
                     `<sub>Mean Coherence: ${stats.mean_coherence.toFixed(3)}, Max: ${stats.max_coherence.toFixed(3)}, ` +
                     `AR1: α₁=${pairData.alpha1.toFixed(3)}, α₂=${pairData.alpha2.toFixed(3)}</sub><br>` +
-                    `<sub>${this.chanceLevelNote(pairData)}</sub><br>` +
-                    `<sub style="font-size: 9px;">Phase arrows (in 95% ridges): ` +
-                    `→ in-phase (0°) | ↗ ${dataType1} leads 45° | ↑ ${dataType1} leads 90° | ↖ ${dataType1} leads 135° | ` +
-                    `← anti-phase (180°) | ↙ ${dataType2} leads 135° | ↓ ${dataType2} leads 90° | ↘ ${dataType2} leads 45°</sub>`,
+                    `<sub>${this.chanceLevelNote(pairData)}</sub>`,
                 font: { color: window.DIMS.theme().font, size: 14 }
             },
                 paper_bgcolor: window.DIMS.theme().paper,
                 plot_bgcolor: window.DIMS.theme().plot,
                 font: { color: window.DIMS.theme().font, size: 10 },
                 showlegend: true,
+                // Under the title and above panel A, whose domain stops at
+                // 0.95. Anchored from its top so it hangs into that gap instead
+                // of growing up into the title.
                 legend: {
-                    x: 0.75,
-                    y: 0.95,
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    font: { size: 9 }
+                    x: 0.08,
+                    y: 0.995,
+                    xanchor: 'left',
+                    yanchor: 'top',
+                    orientation: 'h',
+                    bgcolor: 'rgba(0,0,0,0)',
+                    font: { size: 9, color: window.DIMS.theme().font }
                 },
                 
                 // PANEL A: Time series (top)
                 xaxis4: {
-                    domain: [0.08, 0.70],
+                    domain: [0.08, 0.64],
                     anchor: 'y4',
                     title: '',
                     showticklabels: false,
@@ -598,7 +674,7 @@ if (arrowData.x.length > 0) {
                 
                 // PANEL B: Cross-wavelet power spectrum (middle-left)
                 xaxis: {
-                    domain: [0.08, 0.70],
+                    domain: [0.08, 0.64],
                     anchor: 'y',
                     title: '',
                     showticklabels: false,
@@ -616,7 +692,7 @@ if (arrowData.x.length > 0) {
                 
                 // PANEL C: Global spectrum (middle-right)
                 xaxis2: {
-                    domain: [0.75, 0.95],
+                    domain: [0.78, 0.97],
                     anchor: 'y2',
                     title: 'Power',
                     titlefont: { size: 10 },
@@ -635,7 +711,7 @@ if (arrowData.x.length > 0) {
                 
                 // PANEL D: Scale-averaged power (bottom)
                 xaxis3: {
-                    domain: [0.08, 0.70],
+                    domain: [0.08, 0.64],
                     anchor: 'y3',
                     title: 'Time (s)',
                     gridcolor: window.DIMS.theme().grid
@@ -654,107 +730,29 @@ if (arrowData.x.length > 0) {
                 hovermode: 'closest'
             };
             
-            // Add highlight shapes if there's a selected time
-            if (this.lastClickedPoint !== null) {
-                const windowSize = parseInt(document.getElementById('windowSize').value) || 5;
-                const minTime = Math.min(...vis.time);
-                const maxTime = Math.max(...vis.time);
-                const minLog2Period = Math.min(...log2Period);
-                const maxLog2Period = Math.max(...log2Period);
-                
-                const startTime = Math.max(minTime, this.lastClickedPoint - windowSize / 2);
-                const endTime = Math.min(maxTime, this.lastClickedPoint + windowSize / 2);
-                
-                layout.shapes = [
-                    // Vertical lines on time series (panel A)
-                    {
-                        type: 'line',
-                        x0: startTime, x1: startTime,
-                        y0: 0, y1: 1,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x4', yref: 'y4 domain'
-                    },
-                    {
-                        type: 'line',
-                        x0: endTime, x1: endTime,
-                        y0: 0, y1: 1,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x4', yref: 'y4 domain'
-                    },
-                    // Highlight box on time series
-                    {
-                        type: 'rect',
-                        x0: startTime, x1: endTime,
-                        y0: 0, y1: 1,
-                        fillcolor: window.DIMS.theme().highlight,
-                        opacity: 0.15,
-                        line: { width: 0 },
-                        xref: 'x4', yref: 'y4 domain'
-                    },
-                    // Vertical lines on XWT spectrum (panel B)
-                    {
-                        type: 'line',
-                        x0: startTime, x1: startTime,
-                        y0: minLog2Period, y1: maxLog2Period,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x', yref: 'y'
-                    },
-                    {
-                        type: 'line',
-                        x0: endTime, x1: endTime,
-                        y0: minLog2Period, y1: maxLog2Period,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x', yref: 'y'
-                    },
-                    // Highlight box on XWT spectrum
-                    {
-                        type: 'rect',
-                        x0: startTime, x1: endTime,
-                        y0: minLog2Period, y1: maxLog2Period,
-                        fillcolor: window.DIMS.theme().highlight,
-                        opacity: 0.15,
-                        line: { width: 0 },
-                        xref: 'x', yref: 'y'
-                    },
-                    // Vertical lines on scale-averaged plot (panel D)
-                    {
-                        type: 'line',
-                        x0: startTime, x1: startTime,
-                        y0: 0, y1: 1,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x3', yref: 'y3 domain'
-                    },
-                    {
-                        type: 'line',
-                        x0: endTime, x1: endTime,
-                        y0: 0, y1: 1,
-                        line: { color: window.DIMS.theme().highlight, width: 2 },
-                        xref: 'x3', yref: 'y3 domain'
-                    },
-                    // Highlight box on scale-averaged plot
-                    {
-                        type: 'rect',
-                        x0: startTime, x1: endTime,
-                        y0: 0, y1: 1,
-                        fillcolor: window.DIMS.theme().highlight,
-                        opacity: 0.15,
-                        line: { width: 0 },
-                        xref: 'x3', yref: 'y3 domain'
-                    }
-                ];
-            }
-            
-            console.log(`Calling Plotly.newPlot for ${containerId}`);
+            // The window the playhead is sitting in, on every panel that has a
+            // time axis. Built by a shared helper because the network tab draws
+            // this same figure and has to be able to move the window on it
+            // without redrawing the heatmap underneath.
+            const shapes = this.crossWaveletWindowShapes(vis, log2Period);
+            if (shapes) layout.shapes = shapes;
+
             Plotly.newPlot(containerId, traces, layout, { responsive: true });
             
             // Add click handler
             document.getElementById(containerId).on('plotly_click', (data) => {
                 if (data.points && data.points.length > 0) {
                     const point = data.points[0];
-                    
-                    // Get clicked time (works for all three time-based panels)
+
+                    // Three of the four panels have time on x. Panel C is the
+                    // global spectrum, whose x is POWER -- clicking it used to
+                    // seek the whole dashboard to a power value read as
+                    // seconds. Note the axis excluded here is x2; the
+                    // recurrence figures exclude x3, which in this figure is
+                    // the scale-averaged panel and is a real time axis.
+                    if (point.xaxis && point.xaxis._id === 'x2') return;
+
                     const clickedTime = point.x;
-                    console.log(`Cross-wavelet clicked at time: ${clickedTime.toFixed(2)}s`);
                     
                     // Update video and timeseries
                     this.handleTimeClick(clickedTime);
@@ -765,22 +763,76 @@ if (arrowData.x.length > 0) {
             });
         },
 
+        // Where the playhead's window falls on this pair's figure, as Plotly
+        // shapes -- or null when nothing is selected yet.
+        //
+        // Split out of createCrossWaveletPlot so that moving the window does not
+        // mean rebuilding the plot. The heatmap does not change when the
+        // playhead moves; only this does, and a full newPlot per slider tick is
+        // what made dragging stutter and what left the network tab's detail
+        // figure frozen at whatever moment it was opened.
+        crossWaveletWindowShapes(vis, log2Period) {
+            if (this.lastClickedPoint === null || this.lastClickedPoint === undefined) return null;
+            const sizeEl = document.getElementById('windowSize');
+            const windowSize = (sizeEl && parseInt(sizeEl.value)) || 5;
+            const minTime = Math.min(...vis.time);
+            const maxTime = Math.max(...vis.time);
+            const minLog2Period = Math.min(...log2Period);
+            const maxLog2Period = Math.max(...log2Period);
+
+            const startTime = Math.max(minTime, this.lastClickedPoint - windowSize / 2);
+            const endTime = Math.min(maxTime, this.lastClickedPoint + windowSize / 2);
+            const highlight = window.DIMS.theme().highlight;
+
+            // One edge, one panel: the three time panels differ only in which
+            // axis pair they hang off and whether y is the period scale or the
+            // panel's own domain.
+            const band = (xref, yref, y0, y1) => ([
+                { type: 'line', x0: startTime, x1: startTime, y0, y1,
+                  line: { color: highlight, width: 2 }, xref, yref },
+                { type: 'line', x0: endTime, x1: endTime, y0, y1,
+                  line: { color: highlight, width: 2 }, xref, yref },
+                { type: 'rect', x0: startTime, x1: endTime, y0, y1,
+                  fillcolor: highlight, opacity: 0.15, line: { width: 0 }, xref, yref },
+            ]);
+
+            return [
+                ...band('x4', 'y4 domain', 0, 1),                       // the signals
+                ...band('x', 'y', minLog2Period, maxLog2Period),        // the spectrum
+                ...band('x3', 'y3 domain', 0, 1),                       // scale-averaged
+            ];
+        },
+
+        // Move the window on a figure that is already drawn. Plotly.relayout
+        // touches the shapes and leaves the heatmap alone, which is the whole
+        // difference between a slider that drags smoothly and one that does not.
+        updateCrossWaveletWindow(containerId, pairData) {
+            const host = document.getElementById(containerId);
+            if (!host || !host.data || typeof Plotly === 'undefined') return;
+            const vis = pairData && pairData.visualization;
+            if (!vis || !vis.period) return;
+            const log2Period = vis.period.map(pp => Math.log2(pp));
+            Plotly.relayout(containerId,
+                            { shapes: this.crossWaveletWindowShapes(vis, log2Period) || [] });
+        },
+
         updateCrossWaveletHighlights() {
-            // Re-render all cross-wavelet plots with updated highlights
-            if (this.crossWaveletData && this.crossWaveletData.crosswavelet_pairs) {
-                Object.entries(this.crossWaveletData.crosswavelet_pairs).forEach(([pairKey, pairData], index) => {
-                    const containerId = `cw-plot-${index}`;
-                    if (document.getElementById(containerId)) {
-                        this.createCrossWaveletPlot(containerId, pairKey, pairData);
-                    }
-                });
-            }
+            // Move the window on each figure rather than rebuilding it. This
+            // used to call createCrossWaveletPlot per plot per playhead move --
+            // a full Plotly.newPlot of a heatmap that had not changed -- which
+            // is why dragging the slider over a study with several pairs
+            // stuttered.
+            if (!this.crossWaveletData || !this.crossWaveletData.crosswavelet_pairs) return;
+            Object.entries(this.crossWaveletData.crosswavelet_pairs).forEach(([pairKey, pairData], index) => {
+                this.updateCrossWaveletWindow(`cw-plot-${index}`, pairData);
+            });
         }
     });
 
     window.DIMS.registerTab({
         id: 'crosswavelet',
-        label: 'Cross-Wavelet',
+        label: 'Cross-wavelet analysis',
+        status: 'Click on any plot to select a time point.',
         order: 30,
         containerId: 'crossWaveletContainer',   // kept: other code and tests use this id
         gate: cfg => {

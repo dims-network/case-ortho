@@ -8,6 +8,25 @@
 (function () {
     'use strict';
 
+    /* The figure title.
+     *
+     * This read "ROI Synchrony Over Time for Video {id}" for every study, a
+     * leftover from the fNIRS work the tab was first written for. The tab
+     * plots whatever measures a study has -- foot pressure, motion capture,
+     * speech envelopes -- so naming one study's construct on all of them is
+     * wrong, and it is the first thing a reader sees on the most-used tab.
+     *
+     * `timeseriesTitle` in config.json overrides it; `{videoID}` is
+     * substituted. With nothing set, the study's own title is a better default
+     * than another study's vocabulary.
+     */
+    function timeseriesTitle(config, videoID) {
+        const template = (config && config.timeseriesTitle)
+            || (config && config.title ? `${config.title} — {videoID}` : null)
+            || 'Time series — {videoID}';
+        return template.replace('{videoID}', videoID == null ? '' : videoID);
+    }
+
     // Colours come from the host's palette through the documented
     // accessor, read at draw time so a theme switch is picked up. Tabs
     // must not reach into the host's script scope: a tab file is a
@@ -79,7 +98,7 @@
             // Create layout with subplots
             const layout = {
                 title: {
-                    text: `ROI Synchrony Over Time for Video ${this.currentVideoID}`,
+                    text: timeseriesTitle(this.config, this.currentVideoID),
                     font: { color: window.DIMS.theme().font }
                 },
                 paper_bgcolor: window.DIMS.theme().paper,
@@ -140,6 +159,7 @@
     window.DIMS.registerTab({
         id: 'timeseries',
         label: 'Time series',
+        status: 'Click on any point to segment the video.',
         order: 10,
         containerId: 'plotContainer',   // kept: other code and tests use this id
         gate: () => true,

@@ -1,6 +1,6 @@
 /* DIMS Dashboard — theme tokens (single source of truth for all colors).
    Add a new theme by adding one [data-theme="x"] block below and one <option>
-   in index.html. Charts read these same vars at render time (see js/app.js). */
+   in index.html. Charts read these same values through DIMS.theme(). */
 
 :root{ /* Aurora (default, light) */
     --bg:#ffffff; --panel:#ffffff; --panel2:#f6f8fa; --line:#d9dee3;

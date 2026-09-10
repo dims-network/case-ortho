@@ -20,7 +20,6 @@
             try {
                 // Load RQA data
                 const dataPath = `assets/rqa/${videoID}_rqa_data.json`;
-                console.log('Loading RQA data from:', dataPath);
                 
                 const rqaData = await this.loadJSON(dataPath);
                 
@@ -31,7 +30,6 @@
                     return;
                 }
                 
-                console.log('RQA data loaded:', rqaData);
                 
                 // Validate data structure
                 const stale = window.DIMS.payloadProblem(rqaData, 'RQA output');
@@ -46,8 +44,6 @@
                 // Check if data types match config
                 const configDataTypes = this.config.include_RQA || [];
                 const rqaDataTypes = Object.keys(rqaData.rqa_data);
-                console.log('Config data types:', configDataTypes);
-                console.log('RQA data types:', rqaDataTypes);
                 
                 // Warn about mismatches
                 const missingInRQA = configDataTypes.filter(dt => !rqaDataTypes.includes(dt));
@@ -76,9 +72,8 @@
                 return;
             }
             
-            console.log('Displaying RQA plots for:', this.rqaData);
             
-            container.innerHTML = '<h2 style="color: white; margin-bottom: 20px;">Recurrence Quantification Analysis</h2>';
+            container.innerHTML = '<h2 style="margin-bottom: 20px;">Recurrence Quantification Analysis</h2>';
 
             // One vertical block per data type: a single figure with the recurrence
             // plot and its windowed metric strips (RR / DET / LAM / L_MAX) below it.
@@ -89,7 +84,9 @@
 
                 const plotDiv = document.createElement('div');
                 plotDiv.id = `rqa-plot-${index}`;
-                plotDiv.style.backgroundColor = window.DIMS.theme().paper;
+                // .plot-pane, not an inline background: an inline one is written
+                // once and keeps the colour of whichever theme was active then.
+                plotDiv.classList.add('plot-pane');
                 plotDiv.style.padding = '10px';
                 plotDiv.style.borderRadius = '5px';
                 block.appendChild(plotDiv);
@@ -112,7 +109,7 @@
                     }
                 });
 
-                this.showStatus('RQA plots loaded. Click on any plot to select a time point.');
+                this.showTabStatus();
             }, 100); // Give DOM time to update
         },
 
@@ -163,6 +160,7 @@
     window.DIMS.registerTab({
         id: 'rqa',
         label: 'RQA Plots',
+        status: 'Click on any plot to select a time point.',
         order: 20,
         gate: cfg => Array.isArray(cfg.include_RQA) && cfg.include_RQA.length > 0,
         async onActivate(app, container) {
