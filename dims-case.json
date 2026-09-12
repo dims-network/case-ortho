@@ -1,7 +1,7 @@
 {
   "case": "ortho",
   "visibility": "public",
-  "dimsCore": "1.4.3",
+  "dimsCore": "1.5.0",
   "publishable": [],
   "restricted": [
     "assets/videos",
@@ -12,7 +12,7 @@
   ],
   "vendorHashes": {
     "vendor/dims-core": "f143933ada8ab63eef75f87768f7f43a6a6eb12e3a214e51b1971c658e425de9",
-    "vendor/dims-tabs": "46c6ddcd13f436614a3fb33acb07be4bc8aaa3de58e74ef3dc3bed1d2e27f3d4"
+    "vendor/dims-tabs": "8c182217d9cb2d3b5cedf484b008143dc517478dced66bc3d8710e5a30cbb158"
   },
   "seededHashes": {
     "build_assets.py": "fc747a3a1b97b2f37fc9e42cbcba6017a57fc416ba2a591061935c6b163cf6b2",

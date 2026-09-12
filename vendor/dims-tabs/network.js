@@ -202,6 +202,10 @@
             const hit = groups.find(g => g.match && g.match.test(name));
             (hit || rest).members.push(name);
         });
+        // Leftovers only if there is something to be left over from. With no
+        // group defined, every measure lands here and this bucket *is* the
+        // network -- one person, and it keeps its body. See `drawsBody`.
+        rest.leftover = groups.some(g => g.members.length);
         if (rest.members.length) groups.push(rest);
         return groups.filter(g => g.members.length);
     }
@@ -249,6 +253,9 @@
             if (!placed.has(name)) rest.members.push(name);
         });
 
+        // As in `matchedGrouping`: a bucket that holds everything because the
+        // study defined no groups is the network itself, not its leftovers.
+        rest.leftover = groups.some(g => g.members.length);
         if (rest.members.length) groups.push(rest);
         return groups.filter(g => g.members.length);
     }
@@ -439,6 +446,14 @@
     function fractionX(v) { return v === null ? null : v * VIEW_W; }
     function fractionY(v) { return v === null ? null : v * VIEW_H; }
 
+    // Members spread down one column. Shared with the figure layout, where a
+    // group that has nothing on a body is drawn exactly this way rather than
+    // stacked beside a figure that is not there.
+    function columnY(index, count) {
+        const span = VIEW_H - 180;
+        return count === 1 ? VIEW_H / 2 : 110 + span * index / (count - 1);
+    }
+
     function columnLayout(groups) {
         // One column per group, members spread down it. Simple on purpose: a
         // force layout moves nodes between frames, and this picture is read by
@@ -449,9 +464,7 @@
             const cx = VIEW_W * (gi + 1) / (n + 1);
             const count = group.members.length;
             group.members.forEach((name, mi) => {
-                const span = VIEW_H - 180;
-                const y = count === 1 ? VIEW_H / 2
-                    : 110 + span * mi / (count - 1);
+                const y = columnY(mi, count);
                 const d = declarationFor(group, name);
                 positions[name] = {
                     x: (d && fractionX(d.x)) ?? cx,
@@ -469,24 +482,50 @@
     // measure whose part the vocabulary does not recognise is stacked beside the
     // figure rather than dropped: losing a measure because a lookup table had
     // not heard of it would be worse than the column this replaces.
+    //
+    // A group the study named gets a body, and its leftovers bucket does not.
+    // The bucket held the measures that turned up in a pair and that no
+    // effector declared, and it was drawn like everybody else: a study whose
+    // wizard had a third person removed rendered as two people plus a grey
+    // third figure with the orphaned measure parked 150 units to its side.
+    // There was never a third person. It is a column now, and `drawsBody` is
+    // what the renderer asks.
+    //
+    // Deliberately *not* keyed on whether any member resolved to a body part.
+    // A named group whose measures the vocabulary cannot place -- `eff_a`,
+    // `eff_b` -- is still that group, and asking for a figure layout should
+    // give it a figure rather than silently demote it to dots.
     function figureLayout(groups) {
         const positions = {};
         const n = groups.length;
         groups.forEach((group, gi) => {
             const cx = VIEW_W * (gi + 1) / (n + 1);
             const spots = figurePositions(cx);
+            const count = group.members.length;
             group.cx = cx;
             let strays = 0;
-            group.members.forEach((name) => {
+            group.members.forEach((name, mi) => {
                 const d = declarationFor(group, name);
                 const label = (d && d.label) || nodeLabel(name, group);
                 // A declared part is a statement; a sniffed one is a guess.
                 const part = d ? d.part : (bodyPart(label) || bodyPart(name));
-                const at = part && spots[part];
-                const base = at
-                    ? { x: at.x, y: at.y, group, label, part }
-                    : { x: cx + 150, y: 110 + (strays++) * 70, group, label,
-                        part: null };
+                const at = !group.leftover && part && spots[part];
+                let base;
+                if (at) {
+                    base = { x: at.x, y: at.y, group, label, part };
+                } else if (group.leftover) {
+                    // No figure under it, so no reason to hunt for a body
+                    // part: a plain column, the same one `columnLayout` draws.
+                    base = { x: cx, y: columnY(mi, count), group, label,
+                             part: null };
+                } else {
+                    // Beside its own figure, and inside the picture. A flat
+                    // cx + 150 is past the right edge from five groups on, and
+                    // the label with it.
+                    base = { x: Math.min(cx + 150, VIEW_W - NODE_R * 2),
+                             y: Math.min(110 + (strays++) * 70, VIEW_H - 40),
+                             group, label, part: null };
+                }
                 // Explicit coordinates win over the slot. `x` omitted keeps the
                 // node on its own figure's centre line, which is the only way to
                 // say "on this person, lower down" -- an explicit x is absolute
@@ -498,6 +537,26 @@
         });
         separate(positions);
         return positions;
+    }
+
+    // Under the feet for a figure, over the column for anything else -- and
+    // inside the picture in both cases. `FOOT_Y + 35` is 580 in a viewBox 560
+    // tall, so every group heading in a figure layout was drawn 20 units below
+    // the bottom edge and no reader has ever seen one. The tests did not catch
+    // it because a clipped element is still in the DOM.
+    function headingY(group, positions, style) {
+        if (style !== 'figure') return 60;
+        if (drawsBody(group)) return Math.min(FOOT_Y + 35, VIEW_H - 8);
+        const ys = group.members.map(n => positions[n])
+                                .filter(Boolean).map(q => q.y);
+        return Math.max(24, Math.min(...ys) - TAB_NODE_R - 18);
+    }
+
+    // Whether this group is drawn on a body. One expression, named, so that a
+    // test asserting it is asserting what the renderer actually asks rather
+    // than a second copy of the rule.
+    function drawsBody(group) {
+        return !!group && !group.leftover;
     }
 
     // Two measures on one spot draw one circle over another, with a
@@ -771,8 +830,12 @@
             container.appendChild(svg);
 
             // Figures first, under everything: they are context, not data.
+            // Only for the groups that get one -- see `drawsBody`. The group
+            // heading below is drawn for every group either way, so a bucket
+            // with no body under it still says what it is.
             if (style === 'figure') {
                 groups.forEach(group => {
+                    if (!drawsBody(group)) return;
                     const first = positions[group.members[0]];
                     if (first) appendFigure(svg, group, group.cx ?? first.x, theme);
                 });
@@ -827,15 +890,12 @@
                 });
                 const p = positions[group.members[0]];
                 if (p && group.label) {
-                    const heading2 = el('text', {
-                        x: group.cx ?? p.x,
-                        y: style === 'figure' ? FOOT_Y + 35 : 60,
+                    svg.appendChild(el('text', {
+                        x: group.cx ?? p.x, y: headingY(group, positions, style),
                         'text-anchor': 'middle',
                         fill: group.color || theme.font,
                         'font-size': 16, 'font-weight': 'bold',
-                    });
-                    heading2.textContent = group.label;
-                    svg.appendChild(heading2);
+                    })).textContent = group.label;
                 }
             });
 
