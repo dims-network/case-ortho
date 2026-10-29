@@ -26,12 +26,14 @@ narrows to a window around it.
 |---|---|
 | **Time series** | ball speed and velocity components, and each partner's gaze, on a shared time axis |
 | **Trajectory** | where the ball went, drawn on the board itself, with the path so far up to the selected moment |
-| **RQA** | a recurrence plot per signal — when the ball returns to a state it was in before — with recurrence rate, determinism and laminarity tracked over time. The gaze channels get a *categorical* RQA instead: recurrence means both partners looking at the same region |
+| **RQA** | a recurrence plot per signal — when the ball returns to a state it was in before — with recurrence rate, determinism and laminarity tracked over time. The gaze channels get a *categorical* RQA instead, one plot **per partner**: recurrence means that partner looking back at a region they had looked at earlier, matched as an exact code rather than a distance under a threshold. It is auto-recurrence within one person, not between the two — a plot of where the pair's attention *coincides* would be a cross-recurrence and this study does not compute one |
 | **Cross-Wavelet** | coherence between two signals by time and timescale, with a chance level from a Monte Carlo null. A thick line is not evidence on its own — the tab says what share of cells beat chance |
 | **ELAN** | the annotation tiers, aligned to the video |
 
-Three camera perspectives are available per session — wide, parent, child —
-switchable above the video.
+Up to three camera perspectives per session — wide, parent, child — switchable
+above the video. Not every session has all three, because recordings fail:
+`videoPerspectives` in `config.json` lists what each one actually has, and a
+session with no entry falls back to `{videoID}_wide.mp4`.
 
 ## Data
 
@@ -48,9 +50,25 @@ locally as `{videoID}_{perspective}.mp4`, or point `data.local.json` at
 wherever you keep them (copy `data.local.json.example`). Nothing needs to be
 copied into the repository.
 
-Two sessions — `CUF00_L1_A1` and `CUF00_L1_A2` — have time series, RQA and
-transcripts but no ELAN or cross-wavelet yet. Their tabs render empty until
-the analyses are re-run.
+Two sessions — `CUF00_L1_A1` and `CUF00_L1_A2` — are only partly built. They
+have ball kinematics, RQA, cross-wavelet and transcripts, and they are missing
+everything that comes from the eye-trackers and the annotators:
+
+| they have | they do not have |
+|---|---|
+| `speed`, `vx`, `vy`; RQA; cross-wavelet; transcript | gaze codes, and so no categorical gaze RQA; ELAN tiers; logged `x`/`y` positions; a `videoPerspectives` entry |
+
+So for these two the ELAN tab renders empty, the time-series tab shows the
+kinematic channels only, and the Trajectory tab has no logged positions to
+draw: it falls back to integrating `vx` and `vy` from an arbitrary origin, on
+an uncalibrated field and with no board image behind it. Read that panel as a
+shape, not as a position on the board. The other ten sessions draw the logged
+positions over their own calibrated path image.
+
+The missing `x`/`y` is an artifact of a partial export, not of the recording —
+`tools/export_timeseries.py` writes `x` and `y` alongside `vx`/`vy`/`speed`, so
+re-running it for these two sessions gives them real trajectories. The gaze and
+ELAN gaps are genuine: nobody has coded them.
 
 ## Rebuild the analyses
 

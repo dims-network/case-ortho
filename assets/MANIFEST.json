@@ -678,10 +678,6 @@
       "bytes": 17585,
       "sha256": "852b1f254ba2ecf51d39256057876f05e20535c95583eaaab1ec76c4efea3046"
     },
-    "timeseries/ball_speed.csv": {
-      "bytes": 34469,
-      "sha256": "02093e60c3a6686caf4ad5267f6ead61b4fe9654251249990968860b69c45690"
-    },
     "trajectory_config.json": {
       "bytes": 3321,
       "sha256": "a67dc1d4657d34fab604e16bc83f5cbcb8c86d748977550ec8fe844fb4775bca"
@@ -699,5 +695,5 @@
       "sha256": "f597ae90d972c5bc3beca73cfb0c0ed306f5746721ebff1b871b80f4f5927caf"
     }
   },
-  "generated": "2026-09-08T03:55:33+00:00"
+  "generated": "2026-10-29T15:39:43+00:00"
 }

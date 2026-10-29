@@ -88,7 +88,7 @@
   ],
   "include_trajectory": true,
   "trajectory_settings": {
-    "imagePath": "assets/images/path1.png",
+    "imagePath": "",
     "startX": 150,
     "startY": 150,
     "fieldWidth": 2100,
