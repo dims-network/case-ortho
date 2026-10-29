@@ -53,9 +53,10 @@ def main():
         conn.close()
 
     video_ids = [k for _, k, _ in keys]
-    # Gaze is intentionally NOT a plotted timeseries (categorical). It feeds the
-    # categorical RQA only (include_RQA below); the coded CSVs live in timeseries
-    # for the RQA script to read but are not listed as plottable dataTypes.
+    # Gaze is intentionally NOT a plotted timeseries (categorical). The coded
+    # CSVs live in timeseries so that opt/step_categorical_rqa.py can read them
+    # through the shared series reader, but they are not plottable dataTypes --
+    # and they are not listed in include_RQA either, see below.
     data_types = {k: ["speed", "vy", "vx"] for k in video_ids}
     video_persp = {k: available_perspectives(k) for k in video_ids}
     # Use the db-suggested path image (bare filename, matches path_images keys).
@@ -66,7 +67,14 @@ def main():
         cfg = json.load(f)
     cfg["videoIDs"] = video_ids
     cfg["dataTypes"] = data_types
-    cfg["include_RQA"] = ["gaze_parent", "gaze_child"]   # categorical gaze RQA
+    # include_RQA is NOT rewritten here. It names the channels the *shared*
+    # recurrence step runs on, and those are the kinematic ones. This line used
+    # to set it to ["gaze_parent", "gaze_child"], which pointed the continuous
+    # step -- Euclidean threshold, meant for a real-valued signal -- at integer
+    # AOI codes, and silently dropped the vx/vy recurrence the dashboard draws.
+    # The gaze channels belong to opt/step_categorical_rqa.py, which names them
+    # itself and is switched on by include_categorical_rqa, not by this key;
+    # listing them here too would make two analyses claim the same data.
     cfg["videoPerspectives"] = video_persp
     cfg["path_images"] = path_images_catalog()
     cfg["trajectory_tracks"] = traj_tracks
